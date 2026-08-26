@@ -3,6 +3,38 @@
  * Handles 6x10 Mainboard Grid & Angled Sideboard Fan Display
  */
 
+window.handleCardImgError = function(img) {
+  if (!img) return;
+  const attempts = parseInt(img.dataset.retries || '0', 10);
+  if (attempts === 0) {
+    img.dataset.retries = '1';
+    const originalSrc = img.src;
+    if (originalSrc && !originalSrc.includes('/api/proxy-image')) {
+      img.src = '/api/proxy-image?url=' + encodeURIComponent(originalSrc);
+      return;
+    }
+  } else if (attempts === 1) {
+    img.dataset.retries = '2';
+    setTimeout(() => {
+      if (img) {
+        const clean = img.src.replace('&r=1', '') + '&r=1';
+        img.src = clean;
+      }
+    }, 500);
+    return;
+  }
+  img.style.display = 'none';
+  if (img.parentElement) {
+    img.parentElement.classList.add('card-img-failed');
+    if (!img.parentElement.querySelector('.failed-card-label')) {
+      const label = document.createElement('div');
+      label.className = 'failed-card-label';
+      label.textContent = img.alt || 'Card';
+      img.parentElement.appendChild(label);
+    }
+  }
+};
+
 class DeckVisualizer {
   constructor(containerEl, onCardClickCallback) {
     this.container = containerEl;
@@ -128,7 +160,7 @@ class DeckVisualizer {
 
           cardSlot.innerHTML = `
             <div class="card-sleeve">
-              <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy">
+              <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
             </div>
             <div class="card-tooltip">
               <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>
@@ -228,7 +260,7 @@ class DeckVisualizer {
 
       cardSlot.innerHTML = `
         <div class="card-sleeve">
-          <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy">
+          <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
         </div>
         <div class="card-tooltip">
           <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>

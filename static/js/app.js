@@ -295,14 +295,41 @@ class App {
       ? 'Fetching deck data from URL...' 
       : 'Resolving Premodern printings with Scryfall...';
 
+    const timer1 = setTimeout(() => {
+      if (loader.classList.contains('active')) {
+        statusText.textContent = 'Resolving authentic Premodern printings with Scryfall...';
+      }
+    }, 2500);
+
+    const timer2 = setTimeout(() => {
+      if (loader.classList.contains('active')) {
+        statusText.textContent = 'Packing deck into photographic table layout...';
+      }
+    }, 6500);
+
     this.setStatus('Loading and packing deck into visual grid...');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 40000);
 
     try {
       const resp = await fetch('/api/parse-deck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        let errMsg = `HTTP ${resp.status}`;
+        try {
+          const errData = await resp.json();
+          if (errData && errData.error) errMsg = errData.error;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
 
       const data = await resp.json();
       if (data.error) {
@@ -318,9 +345,14 @@ class App {
       this.setStatus(`Visual grid rendered: ${data.name || 'Deck'} (${mainCount} Main, ${sbCount} SB) • Click any card to customize`);
     } catch (err) {
       console.error('Failed to load deck:', err);
-      alert(`Error loading deck: ${err.message}`);
-      this.setStatus(`Error: ${err.message}`);
+      const isAbort = err.name === 'AbortError';
+      const msg = isAbort ? 'Request timed out after 40 seconds. Please try again.' : err.message;
+      alert(`Error loading deck: ${msg}`);
+      this.setStatus(`Error: ${msg}`);
     } finally {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timeoutId);
       loader.classList.remove('active');
     }
   }

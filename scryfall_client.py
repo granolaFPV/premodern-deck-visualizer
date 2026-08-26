@@ -133,7 +133,7 @@ CURATED_ALTERNATE_SCANS = {
 }
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     cur = conn.cursor()
     cur.execute('''
         CREATE TABLE IF NOT EXISTS card_cache (
@@ -155,7 +155,7 @@ def init_db():
 init_db()
 
 def get_cached_card(cache_key: str):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     cur = conn.cursor()
     cur.execute('SELECT card_json FROM card_cache WHERE cache_key = ?', (cache_key.lower(),))
     row = cur.fetchone()
@@ -168,7 +168,7 @@ def get_cached_card(cache_key: str):
     return None
 
 def set_cached_card(cache_key: str, card_data: dict):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     cur = conn.cursor()
     cur.execute('''
         INSERT OR REPLACE INTO card_cache (cache_key, card_json, updated_at)
@@ -178,7 +178,7 @@ def set_cached_card(cache_key: str, card_data: dict):
     conn.close()
 
 def get_cached_printings(card_name: str):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     cur = conn.cursor()
     cur.execute('SELECT printings_json FROM printings_cache WHERE card_name = ?', (card_name.lower(),))
     row = cur.fetchone()
@@ -191,7 +191,7 @@ def get_cached_printings(card_name: str):
     return None
 
 def set_cached_printings(card_name: str, printings_data: list):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     cur = conn.cursor()
     cur.execute('''
         INSERT OR REPLACE INTO printings_cache (card_name, printings_json, updated_at)
@@ -490,10 +490,13 @@ def resolve_deck_cards(deck_items: list):
                     other_items.append((key_tuple, orig_it))
 
     if other_items:
-        for key_tuple, it in other_items:
-            time.sleep(0.06)
-            res_card = resolve_single_card(it)
-            resolved_map[key_tuple] = res_card
+        def _resolve_entry(entry):
+            key_tuple, it = entry
+            return key_tuple, resolve_single_card(it)
+
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            for key_tuple, res_card in executor.map(_resolve_entry, other_items):
+                resolved_map[key_tuple] = res_card
 
     return resolved_map
 
