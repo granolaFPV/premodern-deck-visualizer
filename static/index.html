@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTG Premodern Deck Visualizer '98</title>
+  <meta name="description" content="Generate realistic overhead tabletop photo visualizations of your Magic: The Gathering Premodern decks with authentic retro frames, Japanese scans, and zippered sideboard layouts.">
+  
+  <!-- OpenGraph / Social Embeds -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://deck-visualizer-4mon.onrender.com/">
+  <meta property="og:title" content="MTG Premodern Deck Visualizer '98">
+  <meta property="og:description" content="Generate realistic overhead tabletop photo visualizations of your MTG Premodern decks with authentic retro frames, Japanese scans, and zippered sideboard layouts.">
+  <meta property="og:image" content="https://deck-visualizer-4mon.onrender.com/static/scans/diabolic_edict_tmp_ja.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MTG Premodern Deck Visualizer '98">
+  <meta name="twitter:description" content="Simulate an authentic overhead table photograph of your MTG Premodern deck.">
+  <meta name="twitter:image" content="https://deck-visualizer-4mon.onrender.com/static/scans/diabolic_edict_tmp_ja.jpg">
+
+  <link rel="stylesheet" href="/static/css/style.css?v=20260826_05">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      console.error('[GLOBAL ERROR]', msg, url, line, col, error);
+      try {
+        fetch('/api/client-error', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({msg: String(msg), url: String(url), line: line, col: col, stack: error ? error.stack : ''})
+        });
+      } catch(e) {}
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      console.error('[UNHANDLED PROMISE]', event.reason);
+      try {
+        fetch('/api/client-error', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({msg: 'Unhandled Promise Rejection: ' + String(event.reason), stack: event.reason ? event.reason.stack : ''})
+        });
+      } catch(e) {}
+    });
+  </script>
+</head>
+<body class="retro-os-body">
+
+  <!-- Retro Application Window -->
+  <div class="retro-window">
+    
+    <!-- Titlebar -->
+    <header class="retro-titlebar">
+      <div class="titlebar-left">
+        <span class="app-icon">🃏</span>
+        <span class="app-title">Magic: The Gathering — Premodern Deck Visualizer '98</span>
+        <span class="title-version-pill">v1.4 Premodern Edition</span>
+      </div>
+      <div class="titlebar-right">
+        <button class="title-btn" id="btnMin" title="Minimize">_</button>
+        <button class="title-btn" id="btnMax" title="Maximize">□</button>
+        <button class="title-btn btn-close" id="btnClose" title="Close">✕</button>
+      </div>
+    </header>
+
+    <!-- Menu Bar -->
+    <nav class="retro-menubar">
+      <div class="menu-item" id="menuDeck">Deck List
+        <div class="dropdown-menu">
+          <button id="menuItemNew">📥 Import New Deck...</button>
+          <button id="menuItemMoxfield">🔗 Load Moxfield URL...</button>
+          <hr>
+          <button id="menuItemEx1">📋 Load Example 1: Moneyball Black</button>
+          <button id="menuItemEx2">📋 Load Example 2: UR Counterburn</button>
+          <hr>
+          <a href="https://github.com/granolaFPV/premodern-deck-visualizer" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:block; color:inherit;"><button style="width:100%; text-align:left; cursor:pointer;">⭐️ View on GitHub</button></a>
+        </div>
+      </div>
+      <div class="menu-item" id="menuView">View
+        <div class="dropdown-menu">
+          <button id="zoomInBtn">🔍 Zoom In (+)</button>
+          <button id="zoomOutBtn">🔍 Zoom Out (-)</button>
+          <button id="zoomResetBtn">🔍 Fit to Screen (100%)</button>
+        </div>
+      </div>
+      <div class="menu-item" id="menuMat">Playmat
+        <div class="dropdown-menu">
+          <button class="mat-opt-btn active" data-mat="heather">🩶 Heathered Grey Cloth (Photo Match)</button>
+          <button class="mat-opt-btn" data-mat="charcoal">🖤 Charcoal Heather Fabric</button>
+          <button class="mat-opt-btn" data-mat="greenfelt">🟢 Classic Green Felt Table</button>
+          <button class="mat-opt-btn" data-mat="wood">🪵 Rich Walnut Table</button>
+        </div>
+      </div>
+      <div class="menu-item" id="menuSleeves">Sleeves
+        <div class="dropdown-menu">
+          <button class="sleeve-opt-btn active" data-sleeve="black">Black Matte Sleeves (Photo Match)</button>
+          <button class="sleeve-opt-btn" data-sleeve="gold">World Championship Gold Borders</button>
+          <button class="sleeve-opt-btn" data-sleeve="clear">Clear / Original Card Borders</button>
+        </div>
+      </div>
+      <div class="menu-item" id="menuExport">Export
+        <div class="dropdown-menu">
+          <button id="menuExportPng">📷 Export High-Resolution PNG...</button>
+        </div>
+      </div>
+      <div class="menu-item" id="menuHelp">About
+        <div class="dropdown-menu">
+          <button id="menuAboutPremodern">ℹ️ About Premodern (4ED → SCG)</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Toolbar -->
+    <div class="retro-toolbar">
+      <div class="tool-group">
+        <button class="tool-btn" id="btnOpenImport" title="Open Deck Importer">
+          <span class="tool-icon">📥</span>
+          <span class="tool-label">Import Deck</span>
+        </button>
+        <button class="tool-btn" id="btnOpenMoxfield" title="Import from Moxfield URL">
+          <span class="tool-icon">🔗</span>
+          <span class="tool-label">Moxfield Link</span>
+        </button>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <button class="tool-btn" id="btnReJitter" title="Randomize subtle table misalignment">
+          <span class="tool-icon">🎲</span>
+          <span class="tool-label">Natural Jitter</span>
+        </button>
+        <div class="tool-slider-box" title="Adjust realistic physical card alignment jitter">
+          <span class="slider-label">Realism:</span>
+          <input type="range" id="realismSlider" min="0" max="100" value="45" class="retro-range">
+          <span class="slider-val" id="realismVal">45%</span>
+        </div>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <div class="tool-select-box">
+          <span class="tool-label">Playmat:</span>
+          <select id="playmatSelect" class="retro-select">
+            <option value="heather">Heather Grey Cloth</option>
+            <option value="charcoal">Charcoal Heather</option>
+            <option value="greenfelt">Green Felt</option>
+            <option value="wood">Walnut Table</option>
+          </select>
+        </div>
+
+        <div class="tool-select-box">
+          <span class="tool-label">Sleeves:</span>
+          <select id="sleeveSelect" class="retro-select">
+            <option value="black">Black Sleeves</option>
+            <option value="gold">Gold Borders</option>
+            <option value="clear">Clear Sleeves</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
+        <button class="tool-btn primary-tool-btn" id="btnExport" title="Export complete visual deck layout to high-res PNG">
+          <span class="tool-icon">📷</span>
+          <span class="tool-label">Export Photo</span>
+        </button>
+      </div>
+
+      <div class="toolbar-spacer"></div>
+
+      <div class="tool-group format-badge-group">
+        <span class="format-badge" title="Premodern Format: Fourth Edition (1995) to Scourge (2003)">
+          🏛️ PREMODERN (4ED — SCG)
+        </span>
+      </div>
+    </div>
+
+    <!-- Main Workspace Container -->
+    <main class="visualizer-viewport" id="viewport">
+      
+      <!-- Table surface / Playmat -->
+      <div class="playmat-surface heather" id="playmat">
+        
+        <!-- Welcome Splash Box (Empty State on first visit or when no deck is loaded) -->
+        <div class="welcome-splash" id="welcomeSplash">
+          <div class="retro-panel welcome-box">
+            <div class="welcome-header">
+              <span class="welcome-icon">🃏</span>
+              <h2 class="welcome-title">Magic: The Gathering — Premodern Deck Visualizer '98</h2>
+            </div>
+            <p class="welcome-desc">
+              Simulate an overhead tabletop photograph of your Premodern deck. Cards are packed edge-to-edge in an authentic 60-card mainboard grid with a zippered 15-card sideboard.
+            </p>
+            <div class="welcome-actions">
+              <button class="retro-btn primary-btn welcome-btn" id="btnWelcomeImport" style="font-size: 13px; padding: 9px 22px;">📥 Import Deck / Moxfield URL</button>
+            </div>
+            <div class="welcome-tips">
+              <span>Tip: Click any card to customize printings, select foreign languages (like Japanese), or upload scans!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mainboard Section (Cards basically touching in 6x10 grid) -->
+        <section class="board-section mainboard-section" id="mainboardSection">
+          <!-- 6x10 Grid Container -->
+          <div class="cards-grid-6x10" id="mainboardGrid">
+            <!-- 60 card slots rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- Sideboard Section (Angled fan display directly below mainboard) -->
+        <section class="board-section sideboard-section" id="sideboardSection">
+          <!-- Angled Sideboard Container -->
+          <div class="sideboard-fan-container" id="sideboardFan">
+            <!-- Sideboard cards rendered in angled overlapping fan -->
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Retro Status Bar -->
+    <footer class="retro-statusbar">
+      <div class="status-panel status-main" id="statusMessage">Ready. Load a deck to begin visualization.</div>
+      <div class="status-panel status-counts" id="statusCounts">Main: 60/60 • Sideboard: 15/15</div>
+      <div class="status-panel status-format">Premodern Legal</div>
+      <div class="status-panel status-scryfall">Scryfall API: Online</div>
+    </footer>
+
+  </div>
+
+  <!-- MODAL 1: Deck List Importer -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal-window retro-panel">
+      <div class="modal-header">
+        <span class="modal-title">📥 Import Magic Deck List</span>
+        <button class="modal-close-btn" id="btnCloseImport">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="preset-bar">
+          <span class="preset-label">Quick Presets:</span>
+          <button class="retro-btn preset-btn" id="presetEx1" title="Example 1: Moneyball Black">
+            📋 Moneyball Black
+          </button>
+          <button class="retro-btn preset-btn" id="presetEx2" title="Example 2: UR Counterburn (Moxfield)">
+            🔗 UR Counterburn
+          </button>
+          <button class="retro-btn preset-btn" id="presetMoxfield" title="Load sample Moxfield Premodern Moneyball deck">
+            🔗 Sample Moxfield Link
+          </button>
+        </div>
+
+        <div class="input-tabs">
+          <button class="tab-btn active" id="tabText">Paste Deck Text</button>
+          <button class="tab-btn" id="tabUrl">Moxfield Link</button>
+        </div>
+
+        <!-- Tab 1: Textarea -->
+        <div class="tab-content active" id="contentTabText">
+          <label for="deckTextInput" class="field-label">
+            Paste deck list (with or without set codes, includes SIDEBOARD section):
+          </label>
+          <textarea id="deckTextInput" class="retro-textarea" rows="14" placeholder="3 Cabal Therapy (WC03) we62sb&#10;4 Dark Ritual (MMQ) 129&#10;16 Swamp (ONS) 341&#10;&#10;SIDEBOARD:&#10;1 Diabolic Edict (TMP) 128&#10;3 Dystopia (ALL) 47"></textarea>
+        </div>
+
+        <!-- Tab 2: Moxfield URL -->
+        <div class="tab-content" id="contentTabUrl">
+          <label for="moxfieldUrlInput" class="field-label">
+            Enter Moxfield Deck URL or Deck ID:
+          </label>
+          <input type="text" id="moxfieldUrlInput" class="retro-input" placeholder="https://moxfield.com/decks/7PTTDYlAxUWL7YYHB8ED5g">
+          <p class="field-help">
+            The visualizer fetches exact card editions, collector numbers, and finishes directly from Moxfield!
+          </p>
+        </div>
+
+        <div class="rule-reminder-box">
+          <strong>Premodern Art Rules Active:</strong>
+          <ul>
+            <li>If set code is specified (e.g. <code>(WC03)</code>, <code>(ONS)</code>), that exact printing is preserved.</li>
+            <li>If no set is specified, the visualizer automatically falls back to the earliest printing within Fourth Edition to Scourge (1995–2003).</li>
+            <li>Every card copy can be changed to any printing or foreign language (such as Japanese) anytime!</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="retro-btn modal-cancel-btn" id="btnCancelImport">Cancel</button>
+        <button class="retro-btn primary-btn" id="btnSubmitImport">✨ Render Visual Layout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Card Version & Art Customizer -->
+  <div class="modal-overlay" id="versionModal">
+    <div class="modal-window version-picker-window retro-panel">
+      <div class="modal-header">
+        <span class="modal-title" id="versionModalTitle">Select Card Printing & Language</span>
+        <button class="modal-close-btn" id="btnCloseVersion">✕</button>
+      </div>
+
+      <div class="modal-body version-picker-body">
+        
+        <!-- Left: Selected Card Preview -->
+        <div class="version-left-col">
+          <div class="card-preview-container">
+            <img id="cardModalPreviewImg" src="" alt="Card Art Preview" class="card-large-preview">
+            <div id="previewFoilBadge" class="foil-badge hidden">✨ FOIL</div>
+          </div>
+          <div class="card-modal-meta">
+            <h3 id="cardModalName" class="meta-card-name">Diabolic Edict</h3>
+            <p id="cardModalPrintedName" class="meta-printed-name">悪魔の布告</p>
+            <div class="meta-detail-row">
+              <span class="meta-badge" id="cardModalSet">TMP</span>
+              <span class="meta-badge" id="cardModalLang">Japanese 🇯🇵</span>
+              <span class="meta-badge" id="cardModalYear">1997</span>
+            </div>
+            <p id="cardModalType" class="meta-type">Instant</p>
+          </div>
+          
+          <div class="custom-url-box">
+            <label for="customImgUrlInput" class="custom-url-label">Custom Image URL / Alter:</label>
+            <input type="text" id="customImgUrlInput" class="retro-input" placeholder="https://...jpg">
+            <button class="retro-btn" id="btnApplyCustomUrl">Apply URL</button>
+          </div>
+        </div>
+
+        <!-- Right: Filter and All Available Printings Grid -->
+        <div class="version-right-col">
+          
+          <!-- Filters Toolbar -->
+          <div class="version-filters">
+            <div class="filter-row">
+              <span class="filter-heading">Language:</span>
+              <div class="lang-pills" id="langPillContainer">
+                <button class="lang-pill active" data-lang="all">All</button>
+                <button class="lang-pill" data-lang="ja">🇯🇵 Japanese (日本語)</button>
+                <button class="lang-pill" data-lang="en">🇺🇸 English</button>
+                <button class="lang-pill" data-lang="de">🇩🇪 German</button>
+                <button class="lang-pill" data-lang="fr">🇫🇷 French</button>
+                <button class="lang-pill" data-lang="it">🇮🇹 Italian</button>
+                <button class="lang-pill" data-lang="es">🇪🇸 Spanish</button>
+                <button class="lang-pill" data-lang="pt">🇵🇹 Portuguese</button>
+                <button class="lang-pill" data-lang="zhs">🇨🇳 Chinese</button>
+              </div>
+            </div>
+
+            <div class="filter-row filter-secondary">
+              <div class="filter-checkboxes">
+                <label class="checkbox-label" title="Only show cards printed from Fourth Edition (1995) to Scourge (2003)">
+                  <input type="checkbox" id="checkPremodernOnly" checked>
+                  <span>🏛️ Premodern Era (4ED → SCG)</span>
+                </label>
+
+                <label class="checkbox-label" title="Only show cards matching Scryfall's frame:old filter (classic 1993/1997 old borders, including retro reprints like DMR and TSR)">
+                  <input type="checkbox" id="checkRetroBorderOnly">
+                  <span>📜 Retro Border Only (frame:old)</span>
+                </label>
+
+                <label class="checkbox-label" title="Hide Scryfall placeholder images that have the 'Localized version not available' banner">
+                  <input type="checkbox" id="checkHidePlaceholders">
+                  <span>🛡️ Hide Scryfall Placeholders</span>
+                </label>
+              </div>
+
+              <div class="search-mini-box">
+                <input type="text" id="printingsSearchInput" class="retro-input mini-input" placeholder="Filter set / code...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Printings Grid -->
+          <div class="printings-grid-container" id="printingsGrid">
+            <div class="loading-printings">
+              <span class="spinner">⏳</span> Fetching printings and foreign editions from Scryfall...
+            </div>
+          </div>
+
+          <!-- Alternate Sources & Photo Upload Section -->
+          <div class="alternate-sources-panel">
+            <div class="alt-header">
+              <span class="alt-title">📷 Custom Photo / Alternate Scan Sources</span>
+              <span class="alt-hint">Use your own physical card photo, Hareruya scan, or web link</span>
+            </div>
+
+            <div class="alt-content-row">
+              <!-- Drag & Drop / Upload Box -->
+              <div class="drop-upload-zone" id="dropUploadZone" title="Click or drag and drop an image of your physical card">
+                <input type="file" id="cardFileInput" accept="image/*" style="display: none;">
+                <span class="upload-icon">📁</span>
+                <span class="upload-text"><strong>Click to upload</strong> or drag & drop photo</span>
+                <span class="upload-sub">Supports JPG, PNG, WEBP (or paste with Ctrl+V)</span>
+              </div>
+
+              <!-- Quick Search Shortcuts -->
+              <div class="alt-search-col">
+                <span class="alt-subheading">Retailer Scan Search:</span>
+                <div class="alt-search-buttons">
+                  <button class="retro-btn alt-link-btn" id="btnSearchHareruya" title="Search Hareruya MTG Japan for this card's Japanese scan">
+                    🇯🇵 Search Hareruya (晴れる屋)
+                  </button>
+                  <button class="retro-btn alt-link-btn" id="btnSearchGoogle" title="Search Google Images for Japanese card scans">
+                    🌐 Google Images Search
+                  </button>
+                </div>
+                <div class="paste-url-bar">
+                  <input type="text" id="directImgUrlInput" class="retro-input" placeholder="Paste direct image URL from Hareruya/web...">
+                  <button class="retro-btn" id="btnApplyDirectUrl">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="modal-footer version-modal-footer">
+        <div class="version-actions-left">
+          <label class="checkbox-label foil-toggle-label">
+            <input type="checkbox" id="toggleFoilCheck">
+            <span>✨ Traditional Foil Sheen</span>
+          </label>
+        </div>
+        <div class="version-actions-right">
+          <button class="retro-btn modal-cancel-btn" id="btnCancelVersion">Cancel</button>
+          <button class="retro-btn primary-btn" id="btnApplySingle">Apply to THIS Card Only</button>
+          <button class="retro-btn apply-all-btn" id="btnApplyAll">Apply to ALL Copies in Deck</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 3: Export Preview Modal -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal-window retro-panel export-preview-window">
+      <div class="modal-header">
+        <span class="modal-title">📷 Export Deck Visual Photo</span>
+        <button class="modal-close-btn" id="btnCloseExport">✕</button>
+      </div>
+
+      <div class="modal-body export-modal-body">
+        <div class="export-preview-box">
+          <canvas id="exportCanvas" class="export-canvas"></canvas>
+          <div class="export-spinner" id="exportSpinner">
+            <span>⏳</span> Rendering high-resolution canvas...
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer export-footer">
+        <div class="export-info" id="exportResolutionInfo">Resolution: 2200 × 1900 px • Full Quality</div>
+        <div class="export-buttons">
+          <button class="retro-btn modal-cancel-btn" id="btnCancelExport">Close</button>
+          <button class="retro-btn primary-btn" id="btnDownloadImage">💾 Download PNG Image</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="app-loading-overlay" id="appLoader">
+    <div class="retro-panel loading-box">
+      <div class="loading-title">Loading Deck Visualization...</div>
+      <div class="retro-progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="loading-status-text" id="loadingStatusText">Resolving Premodern printings with Scryfall...</div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/modal.js?v=20260826_05"></script>
+  <script src="/static/js/visualizer.js?v=20260826_05"></script>
+  <script src="/static/js/exporter.js?v=20260826_05"></script>
+  <script src="/static/js/app.js?v=20260826_05"></script>
+</body>
+</html>
