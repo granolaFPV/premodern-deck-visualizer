@@ -492,19 +492,221 @@ class DeckExporter {
   }
 
   drawPlaymatBackground(ctx, W, H, style) {
+    ctx.save();
+
     if (style === 'charcoal') {
       ctx.fillStyle = '#242528';
       ctx.fillRect(0, 0, W, H);
+      const grad = ctx.createRadialGradient(W / 2, H / 2, 200, W / 2, H / 2, W * 0.7);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.02)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
       return;
     }
+
     if (style === 'greenfelt') {
       ctx.fillStyle = '#174226';
       ctx.fillRect(0, 0, W, H);
+      const grad = ctx.createRadialGradient(W / 2, H / 2, 200, W / 2, H / 2, W * 0.7);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.04)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.55)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
       return;
     }
+
     if (style === 'wood') {
       ctx.fillStyle = '#3e2715';
       ctx.fillRect(0, 0, W, H);
+      for (let x = 0; x < W; x += 80) {
+        ctx.fillStyle = (x % 160 === 0) ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.04)';
+        ctx.fillRect(x, 0, 40, H);
+      }
+      const grad = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, W * 0.75);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.03)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.65)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'spellground') {
+      ctx.fillStyle = '#beaa86';
+      ctx.fillRect(0, 0, W, H);
+      // Micro-linen weave
+      for (let x = 0; x < W; x += 6) {
+        for (let y = 0; y < H; y += 6) {
+          const rand = ((x * 23 + y * 47) % 100) / 100;
+          if (rand > 0.65) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.fillRect(x, y, 2, 2);
+          } else if (rand < 0.3) {
+            ctx.fillStyle = 'rgba(70, 45, 25, 0.05)';
+            ctx.fillRect(x, y, 2, 2);
+          }
+        }
+      }
+      const grad = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, W * 0.7);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+      grad.addColorStop(1, 'rgba(70, 45, 25, 0.45)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(110, 80, 50, 0.4)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(20, 20, W - 40, H - 40);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'cosmic') {
+      ctx.fillStyle = '#0b0714';
+      ctx.fillRect(0, 0, W, H);
+      // Violet nebula
+      const vGrad = ctx.createRadialGradient(W * 0.28, H * 0.35, 80, W * 0.28, H * 0.35, W * 0.55);
+      vGrad.addColorStop(0, 'rgba(139, 92, 246, 0.25)');
+      vGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = vGrad;
+      ctx.fillRect(0, 0, W, H);
+      // Magenta dust
+      const mGrad = ctx.createRadialGradient(W * 0.78, H * 0.65, 60, W * 0.78, H * 0.65, W * 0.5);
+      mGrad.addColorStop(0, 'rgba(217, 70, 239, 0.2)');
+      mGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = mGrad;
+      ctx.fillRect(0, 0, W, H);
+      // Cyan glow
+      const cGrad = ctx.createRadialGradient(W * 0.5, H * 0.82, 40, W * 0.5, H * 0.82, W * 0.4);
+      cGrad.addColorStop(0, 'rgba(6, 182, 212, 0.15)');
+      cGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = cGrad;
+      ctx.fillRect(0, 0, W, H);
+      // Starry occult specks
+      for (let x = 0; x < W; x += 40) {
+        for (let y = 0; y < H; y += 40) {
+          const rand = ((x * 79 + y * 97) % 1000) / 1000;
+          if (rand > 0.94) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + rand * 0.5})`;
+            ctx.fillRect(x + (rand * 15), y + (rand * 25), 2, 2);
+          }
+        }
+      }
+      // Void vignette
+      const darkGrad = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, W * 0.7);
+      darkGrad.addColorStop(0, 'transparent');
+      darkGrad.addColorStop(1, 'rgba(0, 0, 0, 0.75)');
+      ctx.fillStyle = darkGrad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(20, 20, W - 40, H - 40);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'toxic') {
+      ctx.fillStyle = '#0c160e';
+      ctx.fillRect(0, 0, W, H);
+      // Acid green pool
+      const aGrad = ctx.createRadialGradient(W * 0.32, H * 0.42, 60, W * 0.32, H * 0.42, W * 0.5);
+      aGrad.addColorStop(0, 'rgba(34, 197, 94, 0.22)');
+      aGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = aGrad;
+      ctx.fillRect(0, 0, W, H);
+      // Slime yellow
+      const sGrad = ctx.createRadialGradient(W * 0.72, H * 0.62, 50, W * 0.72, H * 0.62, W * 0.45);
+      sGrad.addColorStop(0, 'rgba(234, 179, 8, 0.16)');
+      sGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = sGrad;
+      ctx.fillRect(0, 0, W, H);
+      // Peat noise
+      const darkGrad = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, W * 0.7);
+      darkGrad.addColorStop(0, 'transparent');
+      darkGrad.addColorStop(1, 'rgba(0, 0, 0, 0.75)');
+      ctx.fillStyle = darkGrad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(20, 20, W - 40, H - 40);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'bloodrust') {
+      ctx.fillStyle = '#170909';
+      ctx.fillRect(0, 0, W, H);
+      // Crimson pool
+      const cGrad = ctx.createRadialGradient(W * 0.25, H * 0.65, 80, W * 0.25, H * 0.65, W * 0.55);
+      cGrad.addColorStop(0, 'rgba(220, 38, 38, 0.3)');
+      cGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = cGrad;
+      ctx.fillRect(0, 0, W, H);
+      // Rust streaks
+      const rGrad = ctx.createRadialGradient(W * 0.72, H * 0.32, 60, W * 0.72, H * 0.32, W * 0.48);
+      rGrad.addColorStop(0, 'rgba(180, 83, 9, 0.22)');
+      rGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = rGrad;
+      ctx.fillRect(0, 0, W, H);
+      const darkGrad = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, W * 0.7);
+      darkGrad.addColorStop(0, 'transparent');
+      darkGrad.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
+      ctx.fillStyle = darkGrad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(220, 38, 38, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(20, 20, W - 40, H - 40);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'occult') {
+      ctx.fillStyle = '#13071f';
+      ctx.fillRect(0, 0, W, H);
+      // Royal amethyst core
+      const oGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, 100, W * 0.5, H * 0.5, W * 0.6);
+      oGrad.addColorStop(0, 'rgba(168, 85, 247, 0.22)');
+      oGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = oGrad;
+      ctx.fillRect(0, 0, W, H);
+      const darkGrad = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, W * 0.7);
+      darkGrad.addColorStop(0, 'transparent');
+      darkGrad.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
+      ctx.fillStyle = darkGrad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(20, 20, W - 40, H - 40);
+      ctx.strokeRect(26, 26, W - 52, H - 52);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'grunge') {
+      ctx.fillStyle = '#161a22';
+      ctx.fillRect(0, 0, W, H);
+      // Bleached wash
+      const bGrad = ctx.createRadialGradient(W * 0.65, H * 0.35, 80, W * 0.65, H * 0.35, W * 0.5);
+      bGrad.addColorStop(0, 'rgba(148, 163, 184, 0.16)');
+      bGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = bGrad;
+      ctx.fillRect(0, 0, W, H);
+      // Amber tone
+      const aGrad = ctx.createRadialGradient(W * 0.25, H * 0.68, 60, W * 0.25, H * 0.68, W * 0.45);
+      aGrad.addColorStop(0, 'rgba(217, 119, 6, 0.14)');
+      aGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = aGrad;
+      ctx.fillRect(0, 0, W, H);
+      const darkGrad = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, W * 0.7);
+      darkGrad.addColorStop(0, 'transparent');
+      darkGrad.addColorStop(1, 'rgba(0, 0, 0, 0.75)');
+      ctx.fillStyle = darkGrad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(20, 20, W - 40, H - 40);
+      ctx.restore();
       return;
     }
 
@@ -513,7 +715,6 @@ class DeckExporter {
     ctx.fillRect(0, 0, W, H);
 
     // Render cloth fiber noise pattern
-    ctx.save();
     for (let x = 0; x < W; x += 8) {
       for (let y = 0; y < H; y += 8) {
         const rand = ((x * 17 + y * 31) % 100) / 100;

@@ -89,7 +89,9 @@ class DeckVisualizer {
 
   setPlaymat(style) {
     this.currentPlaymat = style;
-    this.playmatEl.className = `playmat-surface ${style}`;
+    if (this.playmatEl) {
+      this.playmatEl.className = `playmat-surface ${style}${this.isDistressed ? ' is-distressed' : ''}`;
+    }
   }
 
   setSleeve(style) {
