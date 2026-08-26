@@ -56,6 +56,13 @@ class CardVersionModal {
     this.directImgUrlInput = document.getElementById('directImgUrlInput');
     this.btnApplyDirectUrl = document.getElementById('btnApplyDirectUrl');
 
+    // Posca border alter elements
+    this.poscaOverlay = document.getElementById('cardModalPoscaOverlay');
+    this.poscaSwatchesContainer = document.getElementById('poscaSwatches');
+    this.btnResetPosca = document.getElementById('btnResetPosca');
+    this.poscaCustomColorInput = document.getElementById('poscaCustomColor');
+    this.selectedPoscaColor = '';
+
     // Buttons
     this.closeBtn = document.getElementById('btnCloseVersion');
     this.cancelBtn = document.getElementById('btnCancelVersion');
@@ -122,6 +129,22 @@ class CardVersionModal {
       this.selectedPrinting.image_status = 'highres_scan';
       this.selectedPrinting.source = 'Custom URL';
       this.updatePreview();
+
+      // Submit to Community Scans Registry if it's a foreign card printing
+      if (this.selectedPrinting.set && this.selectedPrinting.lang) {
+        fetch('/api/submit-community-scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            card_name: this.currentInstance.name,
+            set: this.selectedPrinting.set,
+            collector_number: this.selectedPrinting.collector_number || '',
+            lang: this.selectedPrinting.lang,
+            image_url: url,
+            printed_name: this.selectedPrinting.printed_name || this.currentInstance.name
+          })
+        }).catch(err => console.warn('Community scan submission error:', err));
+      }
     };
 
     this.applyCustomUrlBtn.addEventListener('click', () => {
@@ -191,9 +214,52 @@ class CardVersionModal {
       window.open(url, '_blank');
     });
 
+    // Posca Swatches
+    if (this.poscaSwatchesContainer) {
+      this.poscaSwatchesContainer.addEventListener('click', (e) => {
+        const swatch = e.target.closest('.posca-swatch');
+        if (!swatch) return;
+        this.poscaSwatchesContainer.querySelectorAll('.posca-swatch').forEach(s => s.classList.remove('active'));
+        swatch.classList.add('active');
+        this.selectedPoscaColor = swatch.dataset.color || '';
+        if (this.selectedPrinting) {
+          this.selectedPrinting.posca_border = this.selectedPoscaColor;
+        }
+        this.updatePreview();
+      });
+    }
+
+    // Posca Custom Color Picker
+    if (this.poscaCustomColorInput) {
+      this.poscaCustomColorInput.addEventListener('input', (e) => {
+        const color = e.target.value;
+        this.poscaSwatchesContainer?.querySelectorAll('.posca-swatch').forEach(s => s.classList.remove('active'));
+        this.selectedPoscaColor = color;
+        if (this.selectedPrinting) {
+          this.selectedPrinting.posca_border = this.selectedPoscaColor;
+        }
+        this.updatePreview();
+      });
+    }
+
+    // Posca Reset Button
+    if (this.btnResetPosca) {
+      this.btnResetPosca.addEventListener('click', () => {
+        this.selectedPoscaColor = '';
+        if (this.selectedPrinting) {
+          this.selectedPrinting.posca_border = '';
+        }
+        this.poscaSwatchesContainer?.querySelectorAll('.posca-swatch').forEach(s => {
+          s.classList.toggle('active', !s.dataset.color);
+        });
+        this.updatePreview();
+      });
+    }
+
     // Apply Single
     this.applySingleBtn.addEventListener('click', () => {
       if (!this.currentInstance || !this.selectedPrinting) return;
+      this.selectedPrinting.posca_border = this.selectedPoscaColor;
       this.onApply({
         instanceId: this.currentInstance.instance_id,
         cardName: this.currentInstance.name,
@@ -206,6 +272,7 @@ class CardVersionModal {
     // Apply All
     this.applyAllBtn.addEventListener('click', () => {
       if (!this.currentInstance || !this.selectedPrinting) return;
+      this.selectedPrinting.posca_border = this.selectedPoscaColor;
       this.onApply({
         instanceId: this.currentInstance.instance_id,
         cardName: this.currentInstance.name,
@@ -246,6 +313,22 @@ class CardVersionModal {
         if (res.url) {
           this.selectedPrinting.image_url = res.url;
           this.selectedPrinting.image_large = res.url;
+
+          // Also register with community registry if foreign
+          if (this.selectedPrinting.set && this.selectedPrinting.lang) {
+            fetch('/api/submit-community-scan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                card_name: this.currentInstance.name,
+                set: this.selectedPrinting.set,
+                collector_number: this.selectedPrinting.collector_number || '',
+                lang: this.selectedPrinting.lang,
+                image_url: res.url,
+                printed_name: this.selectedPrinting.printed_name || this.currentInstance.name
+              })
+            }).catch(err => console.warn('Community scan submission error:', err));
+          }
         }
       } catch (err) {
         console.warn('Could not persist upload to server, using local data URL:', err);
@@ -259,11 +342,26 @@ class CardVersionModal {
     this.currentCardName = cardInstance.name;
     this.printings = []; // Immediately wipe old card printings!
     this.selectedPrinting = { ...(cardInstance.card_data || {}) };
+    this.selectedPoscaColor = cardInstance.posca_border || cardInstance.card_data?.posca_border || '';
+    this.selectedPrinting.posca_border = this.selectedPoscaColor;
     this.titleEl.textContent = `Customize Version & Art — ${cardInstance.name}`;
     this.foilCheck.checked = Boolean(this.selectedPrinting.is_foil);
     this.customUrlInput.value = '';
     this.directImgUrlInput.value = '';
     this.searchInput.value = '';
+
+    // Sync Posca swatches active state
+    if (this.poscaSwatchesContainer) {
+      let matched = false;
+      this.poscaSwatchesContainer.querySelectorAll('.posca-swatch').forEach(s => {
+        const match = (s.dataset.color || '') === this.selectedPoscaColor;
+        s.classList.toggle('active', match);
+        if (match) matched = true;
+      });
+      if (!matched && this.selectedPoscaColor && this.poscaCustomColorInput) {
+        this.poscaCustomColorInput.value = this.selectedPoscaColor;
+      }
+    }
 
     // Reset language pill to "All"
     this.activeLang = 'all';
@@ -313,6 +411,17 @@ class CardVersionModal {
     } else {
       this.foilBadge.classList.add('hidden');
     }
+
+    // Posca overlay preview
+    if (this.poscaOverlay) {
+      const pColor = c.posca_border !== undefined ? c.posca_border : this.selectedPoscaColor;
+      if (pColor) {
+        this.poscaOverlay.style.borderColor = pColor;
+        this.poscaOverlay.classList.remove('hidden');
+      } else {
+        this.poscaOverlay.classList.add('hidden');
+      }
+    }
   }
 
   async fetchPrintings(cardName, seq) {
@@ -353,8 +462,15 @@ class CardVersionModal {
     // Filter printings
     const filtered = this.printings.filter(p => {
       // 1. Language filter
-      if (this.activeLang !== 'all' && p.lang !== this.activeLang) {
-        return false;
+      if (this.activeLang !== 'all') {
+        const pl = (p.lang || '').toLowerCase();
+        if (this.activeLang === 'zhs') {
+          if (pl !== 'zhs' && pl !== 'zh-hans' && pl !== 'cn' && pl !== 'cs') return false;
+        } else if (this.activeLang === 'zht') {
+          if (pl !== 'zht' && pl !== 'zh-hant' && pl !== 'tw' && pl !== 'ct') return false;
+        } else if (pl !== this.activeLang.toLowerCase()) {
+          return false;
+        }
       }
       // 2. Premodern era filter (4ED to SCG)
       if (this.premodernOnly && !p.is_premodern) {
@@ -450,7 +566,8 @@ class CardVersionModal {
         cardOption.classList.add('selected');
         
         const wasFoil = this.foilCheck.checked;
-        this.selectedPrinting = { ...p, is_foil: wasFoil };
+        const currentPosca = this.selectedPoscaColor;
+        this.selectedPrinting = { ...p, is_foil: wasFoil, posca_border: currentPosca };
         this.updatePreview();
       });
 

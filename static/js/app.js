@@ -231,19 +231,43 @@ class App {
       });
     });
 
-    // Realism slider & button
+    // Jitter slider & button
     const realismSlider = document.getElementById('realismSlider');
     const realismVal = document.getElementById('realismVal');
     realismSlider.addEventListener('input', (e) => {
       const val = parseInt(e.target.value);
-      realismVal.textContent = `${val}%`;
+      if (val > 250) {
+        realismVal.textContent = `${val}% 🤪`;
+      } else if (val > 100) {
+        realismVal.textContent = `${val}% 💥`;
+      } else {
+        realismVal.textContent = `${val}%`;
+      }
       this.visualizer.setRealism(val);
+      if (val > 100) {
+        this.setStatus(`Jitter at ${val}%: cards placed haphazardly for the lulz!`);
+      }
     });
 
     document.getElementById('btnReJitter').addEventListener('click', () => {
       this.visualizer.reJitter();
-      this.setStatus('Table alignment subtly re-jittered for natural realism.');
+      this.setStatus('Table alignment re-randomized.');
     });
+
+    // Distressify toggle button
+    const btnDistressify = document.getElementById('btnDistressify');
+    if (btnDistressify) {
+      btnDistressify.addEventListener('click', () => {
+        const nextState = !this.visualizer.isDistressed;
+        btnDistressify.classList.toggle('active', nextState);
+        this.visualizer.setDistressed(nextState);
+        if (nextState) {
+          this.setStatus('Distressify ON: Simulating vintage Heavily Played & Damaged cards with edge wear, scuffs, and aging.');
+        } else {
+          this.setStatus('Distressify OFF: Clean card condition restored.');
+        }
+      });
+    }
 
     // Export button
     const btnExport = document.getElementById('btnExport');
@@ -254,7 +278,9 @@ class App {
         this.currentDeck,
         playmatSelect.value,
         sleeveSelect.value,
-        this.visualizer.realismMultiplier
+        this.visualizer.realismMultiplier,
+        this.visualizer.isDistressed,
+        this.visualizer.jitterPercent
       );
     };
     btnExport.addEventListener('click', triggerExport);

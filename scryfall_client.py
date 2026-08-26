@@ -132,6 +132,85 @@ CURATED_ALTERNATE_SCANS = {
     ]
 }
 
+COMMUNITY_SCANS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'community_scans.json')
+
+def get_community_scans():
+    if not os.path.exists(COMMUNITY_SCANS_PATH):
+        return {}
+    try:
+        with open(COMMUNITY_SCANS_PATH, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get('scans', {})
+    except Exception as e:
+        print(f"Error loading community_scans.json: {e}")
+        return {}
+
+def save_community_scan(card_key: str, scan_data: dict) -> bool:
+    try:
+        scans = {}
+        if os.path.exists(COMMUNITY_SCANS_PATH):
+            with open(COMMUNITY_SCANS_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                scans = data.get('scans', {})
+        scans[card_key] = scan_data
+        with open(COMMUNITY_SCANS_PATH, 'w', encoding='utf-8') as f:
+            json.dump({
+                '_description': 'Community-contributed and curated foreign card scans registry for MTG Premodern Deck Visualizer.',
+                'scans': scans
+            }, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Error saving community scan: {e}")
+        return False
+
+def get_all_curated_and_community_scans(card_name: str):
+    curated_keys = set()
+    curated_items = []
+    
+    # 1. Hardcoded curated scans
+    for (cname, s_code, l_code), alts in CURATED_ALTERNATE_SCANS.items():
+        if cname == card_name.lower():
+            for alt in alts:
+                key = (alt['set'].lower(), str(alt.get('collector_number', '')).lower(), alt['lang'].lower())
+                curated_keys.add(key)
+                curated_items.append(alt)
+                
+    # 2. Dynamic community registry scans
+    comm_scans = get_community_scans()
+    for ckey, cscan in comm_scans.items():
+        if cscan.get('name', '').lower() == card_name.lower():
+            img_url = cscan.get('image_url') or ''
+            if not img_url:
+                continue
+            s = cscan.get('set', '').lower()
+            num = str(cscan.get('collector_number', '')).lower()
+            l = cscan.get('lang', 'ja').lower()
+            key = (s, num, l)
+            if key not in curated_keys:
+                alt = {
+                    'id': f"comm_{s}_{num}_{l}",
+                    'source': 'Community Contributed Scan',
+                    'name': cscan.get('name', card_name),
+                    'label': f"{s.upper()} #{num} {LANG_MAP.get(l, l.upper())} [{cscan.get('printed_name', card_name)}] — Verified Community Scan",
+                    'image_url': img_url,
+                    'image_large': cscan.get('image_large', img_url),
+                    'set': s,
+                    'set_name': cscan.get('set_name', s.upper()),
+                    'collector_number': num,
+                    'lang': l,
+                    'lang_name': LANG_MAP.get(l, l.upper()),
+                    'printed_name': cscan.get('printed_name', card_name),
+                    'frame': cscan.get('frame', '1997'),
+                    'is_retro': cscan.get('is_retro', True),
+                    'is_premodern': cscan.get('is_premodern', True),
+                    'image_status': 'highres_scan',
+                    'is_placeholder': False
+                }
+                curated_keys.add(key)
+                curated_items.append(alt)
+                
+    return curated_keys, curated_items
+
 def init_db():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     cur = conn.cursor()
@@ -503,15 +582,8 @@ def resolve_deck_cards(deck_items: list):
 def get_all_printings_and_languages(card_name: str):
     cached = get_cached_printings(card_name)
     if cached:
-        # Ensure curated alternate scans always override cached Scryfall placeholders
-        curated_keys = set()
-        curated_items = []
-        for (cname, s_code, l_code), alts in CURATED_ALTERNATE_SCANS.items():
-            if cname == card_name.lower():
-                for alt in alts:
-                    key = (alt['set'].lower(), str(alt.get('collector_number', '')).lower(), alt['lang'].lower())
-                    curated_keys.add(key)
-                    curated_items.append(alt)
+        # Ensure curated and community scans always override cached Scryfall placeholders
+        curated_keys, curated_items = get_all_curated_and_community_scans(card_name)
         if curated_keys:
             merged = [p for p in cached if (p['set'].lower(), str(p.get('collector_number', '')).lower(), p['lang'].lower()) not in curated_keys]
             merged.extend(curated_items)
@@ -519,7 +591,7 @@ def get_all_printings_and_languages(card_name: str):
                 is_ph = 1 if p.get('is_placeholder') else 0
                 is_pm = 0 if p.get('is_premodern') else 1
                 is_retro = 0 if p.get('is_retro') else 1
-                lang_order = 0 if p['lang'] in ('en', 'ja') else (1 if p['lang'] in ('de', 'fr', 'it', 'es') else 2)
+                lang_order = 0 if p['lang'] in ('en', 'ja', 'ko', 'zhs', 'zht') else (1 if p['lang'] in ('de', 'fr', 'it', 'es') else 2)
                 rel = p.get('released_at') or '9999-99-99'
                 return (is_ph, is_pm, is_retro, lang_order, rel)
             merged.sort(key=sort_k)
@@ -553,15 +625,14 @@ def get_all_printings_and_languages(card_name: str):
     seen_keys = set()
     unique_printings = []
     
-    # 1. Curated verified scans take highest precedence
-    for (cname, s_code, l_code), alts in CURATED_ALTERNATE_SCANS.items():
-        if cname == card_name.lower():
-            for alt in alts:
-                key = (alt['set'].lower(), str(alt.get('collector_number', '')).lower(), alt['lang'].lower())
-                seen_keys.add(key)
-                unique_printings.append(alt)
+    # 1. Curated & Community verified scans take highest precedence
+    curated_keys, curated_items = get_all_curated_and_community_scans(card_name)
+    for alt in curated_items:
+        key = (alt['set'].lower(), str(alt.get('collector_number', '')).lower(), alt['lang'].lower())
+        seen_keys.add(key)
+        unique_printings.append(alt)
 
-    # 2. Add Scryfall printings (skipping any already covered by curated scans)
+    # 2. Add Scryfall printings (skipping any already covered by curated/community scans)
     for c in all_cards:
         norm = normalize_card_dict(c)
         if norm and norm.get('image_url'):
@@ -579,8 +650,8 @@ def get_all_printings_and_languages(card_name: str):
         is_pm = 0 if p.get('is_premodern') else 1
         # 3. Retro border first
         is_retro = 0 if p.get('is_retro') else 1
-        # 4. Preferred languages (EN, JA)
-        lang_order = 0 if p['lang'] in ('en', 'ja') else (1 if p['lang'] in ('de', 'fr', 'it', 'es') else 2)
+        # 4. Preferred languages (EN, JA, KO, ZHS, ZHT)
+        lang_order = 0 if p['lang'] in ('en', 'ja', 'ko', 'zhs', 'zht') else (1 if p['lang'] in ('de', 'fr', 'it', 'es') else 2)
         rel = p.get('released_at') or '9999-99-99'
         return (is_ph, is_pm, is_retro, lang_order, rel)
 

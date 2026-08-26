@@ -45,7 +45,9 @@ class DeckVisualizer {
     this.playmatEl = document.getElementById('playmat');
 
     this.deckData = null;
-    this.realismMultiplier = 1.0; // 0.0 (laser straight) to 2.0 (casual table)
+    this.jitterPercent = 45;
+    this.realismMultiplier = 1.0; // 0.0 (laser straight) to 7.7 (350% haphazard)
+    this.isDistressed = false;
     this.currentPlaymat = 'heather';
     this.currentSleeve = 'black';
 
@@ -57,10 +59,32 @@ class DeckVisualizer {
     this.render();
   }
 
+  getJitterFactors() {
+    const val = this.jitterPercent !== undefined ? this.jitterPercent : 45;
+    if (val <= 100) {
+      const m = val / 45.0;
+      return { rotMult: m, dMult: m, sbMult: m };
+    }
+    // Beyond 100% up to 350%: progressive haphazard chaos curve
+    const excess = (val - 100) / 250.0; // 0.0 to 1.0
+    return {
+      rotMult: 2.22 + excess * 26.0,   // up to ~20 deg rotations!
+      dMult: 2.22 + excess * 22.0,     // up to ~35px offset!
+      sbMult: 2.22 + excess * 12.0     // wild sideboard wobble!
+    };
+  }
+
   setRealism(valPercent) {
-    // 0% -> 0.0, 45% -> 1.0, 100% -> 2.2
-    this.realismMultiplier = (valPercent / 45.0);
+    this.jitterPercent = valPercent;
+    this.realismMultiplier = valPercent / 45.0;
     this.applyJitterStyles();
+  }
+
+  setDistressed(bool) {
+    this.isDistressed = Boolean(bool);
+    if (this.playmatEl) {
+      this.playmatEl.classList.toggle('is-distressed', this.isDistressed);
+    }
   }
 
   setPlaymat(style) {
@@ -157,15 +181,18 @@ class DeckVisualizer {
           const cardData = cardInst.card_data || {};
           const imgSrc = cardData.image_url || '';
           const langDisplay = cardData.lang_name || cardData.lang?.toUpperCase() || 'EN';
+          const poscaColor = cardData.posca_border || cardInst.posca_border || '';
 
           cardSlot.innerHTML = `
             <div class="card-sleeve">
               <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
+              ${poscaColor ? `<div class="posca-border-overlay" style="border-color: ${poscaColor};"></div>` : ''}
+              <div class="card-distress-overlay"></div>
             </div>
             <div class="card-tooltip">
               <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>
-              <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}</div>
-              <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art/version</div>
+              <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}${poscaColor ? ' • 🖌️ Posca Alter' : ''}</div>
+              <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art / border / version</div>
             </div>
           `;
 
@@ -257,15 +284,18 @@ class DeckVisualizer {
       const cardData = cardInst.card_data || {};
       const imgSrc = cardData.image_url || '';
       const langDisplay = cardData.lang_name || cardData.lang?.toUpperCase() || 'EN';
+      const poscaColor = cardData.posca_border || cardInst.posca_border || '';
 
       cardSlot.innerHTML = `
         <div class="card-sleeve">
           <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
+          ${poscaColor ? `<div class="posca-border-overlay" style="border-color: ${poscaColor};"></div>` : ''}
+          <div class="card-distress-overlay"></div>
         </div>
         <div class="card-tooltip">
           <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>
-          <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}</div>
-          <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art/version</div>
+          <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}${poscaColor ? ' • 🖌️ Posca Alter' : ''}</div>
+          <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art / border / version</div>
         </div>
       `;
 
@@ -285,7 +315,7 @@ class DeckVisualizer {
   applyJitterStyles() {
     if (!this.deckData) return;
 
-    const mult = this.realismMultiplier;
+    const { rotMult, dMult, sbMult } = this.getJitterFactors();
 
     // 1. Mainboard Jitter
     const mbCards = this.mainboardGridEl.querySelectorAll('.card-item:not(.empty-slot)');
@@ -294,9 +324,9 @@ class DeckVisualizer {
       const c = parseInt(slot.dataset.col);
       const cardInst = this.deckData.mainboard?.grid?.[r]?.[c];
       if (cardInst && cardInst.jitter) {
-        const rot = cardInst.jitter.rotation * mult;
-        const dx = cardInst.jitter.dx * mult;
-        const dy = cardInst.jitter.dy * mult;
+        const rot = cardInst.jitter.rotation * rotMult;
+        const dx = cardInst.jitter.dx * dMult;
+        const dy = cardInst.jitter.dy * dMult;
         slot.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
       } else {
         slot.style.transform = 'none';
@@ -310,7 +340,7 @@ class DeckVisualizer {
       const cardInst = this.deckData.sideboard?.cards?.find(x => x.instance_id === id);
       if (cardInst) {
         const baseAngle = -38.0;
-        const angleDiff = (cardInst.angle - baseAngle) * mult;
+        const angleDiff = (cardInst.angle - baseAngle) * sbMult;
         const finalAngle = baseAngle + angleDiff;
         slot.style.transform = `rotate(${finalAngle}deg)`;
       }
@@ -328,6 +358,9 @@ class DeckVisualizer {
         for (let c = 0; c < mb.cols; c++) {
           if (mb.grid[r][c] && mb.grid[r][c].instance_id === instanceId) {
             mb.grid[r][c].card_data = { ...newCardData };
+            if (newCardData.posca_border !== undefined) {
+              mb.grid[r][c].posca_border = newCardData.posca_border;
+            }
             updated = true;
             break;
           }
@@ -341,6 +374,9 @@ class DeckVisualizer {
       const match = mb.cards.find(x => x.instance_id === instanceId);
       if (match) {
         match.card_data = { ...newCardData };
+        if (newCardData.posca_border !== undefined) {
+          match.posca_border = newCardData.posca_border;
+        }
         updated = true;
       }
     }
@@ -350,6 +386,9 @@ class DeckVisualizer {
       const c = this.deckData.sideboard.cards.find(x => x.instance_id === instanceId);
       if (c) {
         c.card_data = { ...newCardData };
+        if (newCardData.posca_border !== undefined) {
+          c.posca_border = newCardData.posca_border;
+        }
         updated = true;
       }
     }
@@ -371,6 +410,9 @@ class DeckVisualizer {
         for (let c = 0; c < mb.cols; c++) {
           if (mb.grid[r][c] && mb.grid[r][c].name.toLowerCase() === lowerTarget) {
             mb.grid[r][c].card_data = { ...newCardData };
+            if (newCardData.posca_border !== undefined) {
+              mb.grid[r][c].posca_border = newCardData.posca_border;
+            }
           }
         }
       }
@@ -381,6 +423,9 @@ class DeckVisualizer {
       mb.cards.forEach(c => {
         if (c.name.toLowerCase() === lowerTarget) {
           c.card_data = { ...newCardData };
+          if (newCardData.posca_border !== undefined) {
+            c.posca_border = newCardData.posca_border;
+          }
         }
       });
     }
@@ -390,6 +435,9 @@ class DeckVisualizer {
       this.deckData.sideboard.cards.forEach(c => {
         if (c.name.toLowerCase() === lowerTarget) {
           c.card_data = { ...newCardData };
+          if (newCardData.posca_border !== undefined) {
+            c.posca_border = newCardData.posca_border;
+          }
         }
       });
     }

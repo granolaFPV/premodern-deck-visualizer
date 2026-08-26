@@ -183,7 +183,38 @@ class DeckVisualizerHandler(BaseHTTPRequestHandler):
                 with open(filepath, 'wb') as f:
                     f.write(img_bytes)
 
+                # Check for optional Cloudflare R2 / S3 storage (Free persistent storage on Render)
+                r2_bucket = os.environ.get('R2_BUCKET_NAME')
+                r2_endpoint = os.environ.get('R2_ENDPOINT_URL')
+                r2_access = os.environ.get('R2_ACCESS_KEY_ID')
+                r2_secret = os.environ.get('R2_SECRET_ACCESS_KEY')
+                r2_domain = os.environ.get('R2_PUBLIC_DOMAIN', '').rstrip('/')
+
                 public_url = f"/static/uploads/{filename}"
+                if r2_bucket and r2_endpoint and r2_access and r2_secret:
+                    try:
+                        import boto3
+                        s3 = boto3.client(
+                            's3',
+                            endpoint_url=r2_endpoint,
+                            aws_access_key_id=r2_access,
+                            aws_secret_access_key=r2_secret,
+                            region_name='auto'
+                        )
+                        content_type = f"image/{ext}" if ext != 'jpg' else 'image/jpeg'
+                        s3.put_object(
+                            Bucket=r2_bucket,
+                            Key=f"scans/{filename}",
+                            Body=img_bytes,
+                            ContentType=content_type
+                        )
+                        if r2_domain:
+                            public_url = f"{r2_domain}/scans/{filename}"
+                        else:
+                            public_url = f"{r2_endpoint}/{r2_bucket}/scans/{filename}"
+                    except Exception as r2_err:
+                        print(f"R2 upload failed, using local: {r2_err}")
+
                 self.send_json({
                     'success': True,
                     'url': public_url,
@@ -192,6 +223,39 @@ class DeckVisualizerHandler(BaseHTTPRequestHandler):
                 })
             except Exception as e:
                 self.send_error_json(500, f'Error saving uploaded card image: {e}')
+            return
+
+        # 2. API: Submit Community Scan (Stores in community_scans.json)
+        if path == '/api/submit-community-scan':
+            card_name = req_data.get('card_name', '').strip()
+            set_code = req_data.get('set', '').strip().lower()
+            collector_num = str(req_data.get('collector_number', '')).strip().lower()
+            lang = req_data.get('lang', 'ja').strip().lower()
+            image_url = req_data.get('image_url', '').strip()
+            printed_name = req_data.get('printed_name', '').strip() or card_name
+
+            if not card_name or not set_code or not image_url:
+                self.send_error_json(400, 'Missing required fields (card_name, set, image_url)')
+                return
+
+            card_key = f"{set_code}_{collector_num}_{lang}"
+            scan_data = {
+                'name': card_name,
+                'set': set_code,
+                'collector_number': collector_num,
+                'lang': lang,
+                'printed_name': printed_name,
+                'image_url': image_url,
+                'image_large': image_url,
+                'submitted_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                'is_premodern': True,
+                'is_retro': True
+            }
+            success = scryfall_client.save_community_scan(card_key, scan_data)
+            if success:
+                self.send_json({'success': True, 'key': card_key, 'scan': scan_data})
+            else:
+                self.send_error_json(500, 'Failed to save community scan')
             return
 
         # 2. API: Parse Deck

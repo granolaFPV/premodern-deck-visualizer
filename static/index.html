@@ -126,15 +126,19 @@
       <div class="tool-divider"></div>
 
       <div class="tool-group">
-        <button class="tool-btn" id="btnReJitter" title="Randomize subtle table misalignment">
+        <button class="tool-btn" id="btnReJitter" title="Randomize card misalignment">
           <span class="tool-icon">🎲</span>
-          <span class="tool-label">Natural Jitter</span>
+          <span class="tool-label">Jitter</span>
         </button>
-        <div class="tool-slider-box" title="Adjust realistic physical card alignment jitter">
-          <span class="slider-label">Realism:</span>
-          <input type="range" id="realismSlider" min="0" max="100" value="45" class="retro-range">
+        <div class="tool-slider-box" title="Adjust physical card alignment jitter (up to 350% for haphazard chaos)">
+          <span class="slider-label">Jitter:</span>
+          <input type="range" id="realismSlider" min="0" max="350" value="45" class="retro-range">
           <span class="slider-val" id="realismVal">45%</span>
         </div>
+        <button class="tool-btn" id="btnDistressify" title="Toggle Distressify: Simulates vintage Heavily Played and Damaged cards with edge wear, scuffs, and aging">
+          <span class="tool-icon">📜</span>
+          <span class="tool-label">Distressify</span>
+        </button>
       </div>
 
       <div class="tool-divider"></div>
@@ -318,6 +322,7 @@
         <div class="version-left-col">
           <div class="card-preview-container">
             <img id="cardModalPreviewImg" src="" alt="Card Art Preview" class="card-large-preview">
+            <div id="cardModalPoscaOverlay" class="posca-preview-overlay hidden"></div>
             <div id="previewFoilBadge" class="foil-badge hidden">✨ FOIL</div>
           </div>
           <div class="card-modal-meta">
@@ -329,6 +334,31 @@
               <span class="meta-badge" id="cardModalYear">1997</span>
             </div>
             <p id="cardModalType" class="meta-type">Instant</p>
+          </div>
+
+          <!-- Posca Marker Border Alter -->
+          <div class="posca-marker-section">
+            <div class="posca-header">
+              <span class="posca-title">🖌️ Posca Marker Border:</span>
+              <button type="button" class="posca-reset-btn" id="btnResetPosca" title="Reset to natural card border">Reset</button>
+            </div>
+            <div class="posca-swatches" id="poscaSwatches">
+              <button type="button" class="posca-swatch active" data-color="" title="None (Original Border)" style="background: transparent; border: 2px dashed #666;"></button>
+              <button type="button" class="posca-swatch" data-color="#111111" title="Posca Black (Black-Border Alter)" style="background: #111111;"></button>
+              <button type="button" class="posca-swatch" data-color="#f5f5f0" title="Posca White (White-Border Alter)" style="background: #f5f5f0;"></button>
+              <button type="button" class="posca-swatch" data-color="#d4af37" title="Posca Metallic Gold" style="background: #d4af37;"></button>
+              <button type="button" class="posca-swatch" data-color="#c0c0c0" title="Posca Metallic Silver" style="background: #c0c0c0;"></button>
+              <button type="button" class="posca-swatch" data-color="#c41e3a" title="Posca Crimson Red" style="background: #c41e3a;"></button>
+              <button type="button" class="posca-swatch" data-color="#1e90ff" title="Posca Royal Blue" style="background: #1e90ff;"></button>
+              <button type="button" class="posca-swatch" data-color="#2e8b57" title="Posca Forest Green" style="background: #2e8b57;"></button>
+              <button type="button" class="posca-swatch" data-color="#8a2be2" title="Posca Violet Purple" style="background: #8a2be2;"></button>
+              <button type="button" class="posca-swatch" data-color="#ff1493" title="Posca Hot Pink" style="background: #ff1493;"></button>
+              <label class="posca-custom-label" title="Pick any custom Posca color">
+                <input type="color" id="poscaCustomColor" value="#d4af37" class="posca-color-input">
+                <span class="posca-custom-btn">🎨</span>
+              </label>
+            </div>
+            <div class="posca-hint">Click a color to paint the border. Applies to single card or all copies!</div>
           </div>
           
           <div class="custom-url-box">
@@ -348,13 +378,15 @@
               <div class="lang-pills" id="langPillContainer">
                 <button class="lang-pill active" data-lang="all">All</button>
                 <button class="lang-pill" data-lang="ja">🇯🇵 Japanese (日本語)</button>
+                <button class="lang-pill" data-lang="ko">🇰🇷 Korean (한국어)</button>
+                <button class="lang-pill" data-lang="zhs">🇨🇳 Simp. Chinese (简体)</button>
+                <button class="lang-pill" data-lang="zht">🇹🇼 Trad. Chinese (繁體)</button>
                 <button class="lang-pill" data-lang="en">🇺🇸 English</button>
                 <button class="lang-pill" data-lang="de">🇩🇪 German</button>
                 <button class="lang-pill" data-lang="fr">🇫🇷 French</button>
                 <button class="lang-pill" data-lang="it">🇮🇹 Italian</button>
                 <button class="lang-pill" data-lang="es">🇪🇸 Spanish</button>
                 <button class="lang-pill" data-lang="pt">🇵🇹 Portuguese</button>
-                <button class="lang-pill" data-lang="zhs">🇨🇳 Chinese</button>
               </div>
             </div>
 

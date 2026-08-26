@@ -42,10 +42,160 @@ class DeckExporter {
     this.modalEl.classList.remove('active');
   }
 
-  async exportDeck(deckData, playmatStyle = 'heather', sleeveStyle = 'black', realismMultiplier = 1.0) {
+  getJitterFactors(jitterPercent = 45) {
+    if (jitterPercent <= 100) {
+      const m = jitterPercent / 45.0;
+      return { rotMult: m * 0.75, dMult: m * 0.8, sbMult: m };
+    }
+    const excess = (jitterPercent - 100) / 250.0;
+    return {
+      rotMult: (100 / 45.0) * 0.75 + excess * 22.0,
+      dMult: (100 / 45.0) * 0.8 + excess * 18.0,
+      sbMult: (100 / 45.0) + excess * 10.0
+    };
+  }
+
+  drawPoscaBorder(ctx, cardW, cardH, sleevePad, cardRadius, poscaColor) {
+    const borderThick = 13; // Authentic ~3.5mm real card border in export resolution
+    ctx.save();
+    
+    // Draw outer thick Posca acrylic border
+    ctx.strokeStyle = poscaColor;
+    ctx.lineWidth = borderThick;
+    this.drawRoundedRect(
+      ctx,
+      -cardW / 2 + sleevePad + borderThick / 2,
+      -cardH / 2 + sleevePad + borderThick / 2,
+      cardW - (sleevePad * 2) - borderThick,
+      cardH - (sleevePad * 2) - borderThick,
+      Math.max(2, cardRadius - 2)
+    );
+    ctx.stroke();
+
+    // Subtle matte acrylic paint sheen & inner black keyline
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.lineWidth = 1.2;
+    this.drawRoundedRect(
+      ctx,
+      -cardW / 2 + sleevePad + borderThick,
+      -cardH / 2 + sleevePad + borderThick,
+      cardW - (sleevePad * 2) - (borderThick * 2),
+      cardH - (sleevePad * 2) - (borderThick * 2),
+      Math.max(1, cardRadius - borderThick / 2)
+    );
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  drawDistressWear(ctx, cardW, cardH, sleevePad, cardRadius, seedStr) {
+    ctx.save();
+    
+    // Deterministic pseudo-random number generator for this card
+    let hash = 0;
+    const s = String(seedStr);
+    for (let i = 0; i < s.length; i++) {
+      hash = ((hash << 5) - hash) + s.charCodeAt(i);
+      hash |= 0;
+    }
+    const rnd = () => {
+      hash = (hash * 16807 + 12345) % 2147483647;
+      return (Math.abs(hash) % 1000) / 1000.0;
+    };
+
+    const innerX = -cardW / 2 + sleevePad;
+    const innerY = -cardH / 2 + sleevePad;
+    const innerW = cardW - sleevePad * 2;
+    const innerH = cardH - sleevePad * 2;
+
+    // 1. Edge Whitening / Frayed Cardstock Core (Cardboard exposure along outer edges)
+    ctx.fillStyle = 'rgba(240, 235, 220, 0.7)';
+    // Top & Bottom edges
+    for (let x = innerX + 6; x < innerX + innerW - 6; x += 10 + rnd() * 16) {
+      const wearLen = 6 + rnd() * 16;
+      const wearDepth = 1.2 + rnd() * 2.5;
+      if (rnd() > 0.28) {
+        ctx.fillRect(x, innerY, wearLen, wearDepth);
+      }
+      if (rnd() > 0.32) {
+        ctx.fillRect(x, innerY + innerH - wearDepth, wearLen, wearDepth);
+      }
+    }
+    // Left & Right edges
+    for (let y = innerY + 6; y < innerY + innerH - 6; y += 10 + rnd() * 16) {
+      const wearLen = 6 + rnd() * 16;
+      const wearDepth = 1.2 + rnd() * 2.5;
+      if (rnd() > 0.3) {
+        ctx.fillRect(innerX, y, wearDepth, wearLen);
+      }
+      if (rnd() > 0.28) {
+        ctx.fillRect(innerX + innerW - wearDepth, y, wearDepth, wearLen);
+      }
+    }
+
+    // 2. Corner dings / whitening
+    const corners = [
+      [innerX, innerY],
+      [innerX + innerW - 8, innerY],
+      [innerX, innerY + innerH - 8],
+      [innerX + innerW - 8, innerY + innerH - 8]
+    ];
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    corners.forEach(([cx, cy]) => {
+      if (rnd() > 0.2) {
+        ctx.beginPath();
+        ctx.arc(cx + 4, cy + 4, 3 + rnd() * 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // 3. Playmat / Fingernail Scratches
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
+    ctx.lineWidth = 0.8;
+    const numScratches = Math.floor(2 + rnd() * 4);
+    for (let i = 0; i < numScratches; i++) {
+      const sx = innerX + 20 + rnd() * (innerW - 40);
+      const sy = innerY + 25 + rnd() * (innerH - 50);
+      const len = 18 + rnd() * 40;
+      const angle = (rnd() - 0.5) * Math.PI * 0.85;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
+      ctx.stroke();
+    }
+
+    // 4. Subtle diagonal corner stress crease (simulates classic HP/DMG pocket bend)
+    if (rnd() > 0.45) {
+      const isTopRight = rnd() > 0.5;
+      const creaseX = isTopRight ? innerX + innerW - 35 : innerX + 10;
+      const creaseY = innerY + 14 + rnd() * 20;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(creaseX, creaseY);
+      ctx.lineTo(creaseX + 28, creaseY + 28);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.moveTo(creaseX + 1, creaseY + 1);
+      ctx.lineTo(creaseX + 29, creaseY + 29);
+      ctx.stroke();
+    }
+
+    // 5. Vintage cardstock patina / slight sepia fading
+    ctx.fillStyle = 'rgba(100, 75, 30, 0.07)';
+    this.drawRoundedRect(ctx, innerX, innerY, innerW, innerH, cardRadius);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  async exportDeck(deckData, playmatStyle = 'heather', sleeveStyle = 'black', realismMultiplier = 1.0, isDistressed = false, jitterPercent = 45) {
     this.deckName = deckData.name || 'Premodern_Deck';
     this.modalEl.classList.add('active');
     this.spinner.classList.add('active');
+
+    const jitterFactors = this.getJitterFactors(jitterPercent);
 
     // High resolution dimensions (Balanced photographic table framing)
     const W = 2000;
@@ -154,10 +304,10 @@ class DeckExporter {
           const baseX = startX + c * (cardW + gapX);
           const baseY = startY + r * (cardH + gapY);
 
-          // Natural subtle table jitter
-          const rotDeg = (cardInst.jitter?.rotation || 0) * realismMultiplier * 0.75;
-          const dx = (cardInst.jitter?.dx || 0) * realismMultiplier * 0.8;
-          const dy = (cardInst.jitter?.dy || 0) * realismMultiplier * 0.8;
+          // Jitter (Natural subtle misalignment up to 350% haphazard chaos)
+          const rotDeg = (cardInst.jitter?.rotation || 0) * jitterFactors.rotMult;
+          const dx = (cardInst.jitter?.dx || 0) * jitterFactors.dMult;
+          const dy = (cardInst.jitter?.dy || 0) * jitterFactors.dMult;
 
           const cx = baseX + cardW / 2 + dx;
           const cy = baseY + cardH / 2 + dy;
@@ -211,6 +361,17 @@ class DeckExporter {
             ctx.restore();
           }
 
+          // Posca Border Alter
+          const poscaColor = cardInst.card_data?.posca_border || cardInst.posca_border;
+          if (poscaColor) {
+            this.drawPoscaBorder(ctx, cardW, cardH, sleevePad, cardRadius, poscaColor);
+          }
+
+          // Distressify Wear & Scuffs
+          if (isDistressed) {
+            this.drawDistressWear(ctx, cardW, cardH, sleevePad, cardRadius, cardInst.instance_id || `${r}_${c}`);
+          }
+
           // Subtle specular sleeve edge highlight
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
           ctx.lineWidth = 1;
@@ -256,7 +417,8 @@ class DeckExporter {
         }
 
         const baseAngle = -38.0;
-        const angle = (cardInst.angle || baseAngle) * (realismMultiplier > 0.5 ? 1 : realismMultiplier * 2);
+        const angleDiff = ((cardInst.angle || baseAngle) - baseAngle) * jitterFactors.sbMult;
+        const angle = baseAngle + angleDiff;
 
         ctx.save();
         ctx.translate(cx, cy);
@@ -300,6 +462,17 @@ class DeckExporter {
               cardH - sleevePad * 2
             );
             ctx.restore();
+          }
+
+          // Posca Border Alter
+          const poscaColor = cardInst.card_data?.posca_border || cardInst.posca_border;
+          if (poscaColor) {
+            this.drawPoscaBorder(ctx, cardW, cardH, sleevePad, cardRadius, poscaColor);
+          }
+
+          // Distressify Wear & Scuffs
+          if (isDistressed) {
+            this.drawDistressWear(ctx, cardW, cardH, sleevePad, cardRadius, cardInst.instance_id || `sb_${col}`);
           }
 
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
