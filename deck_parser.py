@@ -230,7 +230,14 @@ def fetch_deck_from_url(url: str) -> dict:
         'Accept': 'text/html,application/xhtml+xml,application/xml,application/json;q=0.9,*/*;q=0.8'
     }
 
-    # 1. Moxfield
+    # 1. MTGDecks.net (Cloudflare Bot Protection notice)
+    if 'mtgdecks.net' in url:
+        raise ValueError(
+            "mtgdecks.net protects its decklists behind Cloudflare bot verification, blocking direct server URL fetching. "
+            "Please open the deck on mtgdecks.net, click 'Export' or 'Copy', and paste the text directly into the Deck List box!"
+        )
+
+    # 2. Moxfield
     if 'moxfield.com' in url:
         deck_id = extract_moxfield_deck_id(url)
         api_url = f'https://api2.moxfield.com/v2/decks/all/{deck_id}'
