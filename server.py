@@ -197,31 +197,23 @@ class DeckVisualizerHandler(BaseHTTPRequestHandler):
         # 2. API: Parse Deck
         if path == '/api/parse-deck':
             text = req_data.get('text', '').strip()
-            moxfield_url = req_data.get('moxfield_url', '').strip()
+            deck_url = req_data.get('url', '').strip() or req_data.get('moxfield_url', '').strip()
             deck_name = 'Premodern Deck'
             deck_format = 'premodern'
 
             mainboard_items = []
             sideboard_items = []
 
-            # Moxfield Import
-            if moxfield_url:
-                deck_id = deck_parser.extract_moxfield_deck_id(moxfield_url)
-                mox_url = f'https://api2.moxfield.com/v2/decks/all/{deck_id}'
-                req = urllib.request.Request(mox_url, headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) MTGVisualizer/1.0',
-                    'Accept': 'application/json'
-                })
+            # URL Import (Moxfield, TopDeck.gg, Archidekt, MTGGoldfish, MTGTop8, Cube Cobra, Pastebin, etc.)
+            if deck_url:
                 try:
-                    with urllib.request.urlopen(req, timeout=10) as resp:
-                        mox_data = json.loads(resp.read().decode('utf-8'))
-                        parsed_mox = deck_parser.parse_moxfield_data(mox_data)
-                        deck_name = parsed_mox.get('name', 'Moxfield Deck')
-                        deck_format = parsed_mox.get('format', 'premodern')
-                        mainboard_items = parsed_mox.get('mainboard', [])
-                        sideboard_items = parsed_mox.get('sideboard', [])
+                    parsed_deck = deck_parser.fetch_deck_from_url(deck_url)
+                    deck_name = parsed_deck.get('name', 'Imported Deck')
+                    deck_format = parsed_deck.get('format', 'premodern')
+                    mainboard_items = parsed_deck.get('mainboard', [])
+                    sideboard_items = parsed_deck.get('sideboard', [])
                 except Exception as e:
-                    self.send_error_json(400, f'Failed to fetch Moxfield deck ({deck_id}): {e}')
+                    self.send_error_json(400, f'Failed to import deck from URL: {e}')
                     return
             # Text Input
             elif text:
@@ -229,7 +221,7 @@ class DeckVisualizerHandler(BaseHTTPRequestHandler):
                 mainboard_items = parsed_text['mainboard']
                 sideboard_items = parsed_text['sideboard']
             else:
-                self.send_error_json(400, 'Please provide either deck text or a Moxfield URL.')
+                self.send_error_json(400, 'Please provide either deck text or a deck URL.')
                 return
 
             if not mainboard_items and not sideboard_items:

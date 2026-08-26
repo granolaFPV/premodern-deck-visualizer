@@ -17,7 +17,7 @@
   <meta name="twitter:description" content="Simulate an authentic overhead table photograph of your MTG Premodern deck.">
   <meta name="twitter:image" content="https://deck-visualizer-4mon.onrender.com/static/scans/diabolic_edict_tmp_ja.jpg">
 
-  <link rel="stylesheet" href="/static/css/style.css?v=20260826_05">
+  <link rel="stylesheet" href="/static/css/style.css?v=20260826_06">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -68,7 +68,7 @@
       <div class="menu-item" id="menuDeck">Deck List
         <div class="dropdown-menu">
           <button id="menuItemNew">📥 Import New Deck...</button>
-          <button id="menuItemMoxfield">🔗 Load Moxfield URL...</button>
+          <button id="menuItemMoxfield">🔗 Load Deck URL (TopDeck, Moxfield, Archidekt...)...</button>
           <hr>
           <button id="menuItemEx1">📋 Load Example 1: Moneyball Black</button>
           <button id="menuItemEx2">📋 Load Example 2: UR Counterburn</button>
@@ -117,9 +117,9 @@
           <span class="tool-icon">📥</span>
           <span class="tool-label">Import Deck</span>
         </button>
-        <button class="tool-btn" id="btnOpenMoxfield" title="Import from Moxfield URL">
+        <button class="tool-btn" id="btnOpenMoxfield" title="Import from Deck URL (TopDeck.gg, Moxfield, Archidekt, etc.)">
           <span class="tool-icon">🔗</span>
-          <span class="tool-label">Moxfield Link</span>
+          <span class="tool-label">Deck URL</span>
         </button>
       </div>
 
@@ -247,16 +247,16 @@
             📋 Moneyball Black
           </button>
           <button class="retro-btn preset-btn" id="presetEx2" title="Example 2: UR Counterburn (Moxfield)">
-            🔗 UR Counterburn
+            🔗 UR Counterburn (Moxfield)
           </button>
-          <button class="retro-btn preset-btn" id="presetMoxfield" title="Load sample Moxfield Premodern Moneyball deck">
-            🔗 Sample Moxfield Link
+          <button class="retro-btn preset-btn" id="presetTopDeck" title="Sample TopDeck.gg Tournament Deck">
+            🔥 TopDeck.gg Sample
           </button>
         </div>
 
         <div class="input-tabs">
           <button class="tab-btn active" id="tabText">Paste Deck Text</button>
-          <button class="tab-btn" id="tabUrl">Moxfield Link</button>
+          <button class="tab-btn" id="tabUrl">Import from URL</button>
         </div>
 
         <!-- Tab 1: Textarea -->
@@ -267,14 +267,23 @@
           <textarea id="deckTextInput" class="retro-textarea" rows="14" placeholder="3 Cabal Therapy (WC03) we62sb&#10;4 Dark Ritual (MMQ) 129&#10;16 Swamp (ONS) 341&#10;&#10;SIDEBOARD:&#10;1 Diabolic Edict (TMP) 128&#10;3 Dystopia (ALL) 47"></textarea>
         </div>
 
-        <!-- Tab 2: Moxfield URL -->
+        <!-- Tab 2: Deck URL -->
         <div class="tab-content" id="contentTabUrl">
           <label for="moxfieldUrlInput" class="field-label">
-            Enter Moxfield Deck URL or Deck ID:
+            Enter Deck URL (TopDeck.gg, Moxfield, Archidekt, MTGGoldfish, MTGTop8, Cube Cobra):
           </label>
-          <input type="text" id="moxfieldUrlInput" class="retro-input" placeholder="https://moxfield.com/decks/7PTTDYlAxUWL7YYHB8ED5g">
-          <p class="field-help">
-            The visualizer fetches exact card editions, collector numbers, and finishes directly from Moxfield!
+          <input type="text" id="moxfieldUrlInput" class="retro-input" placeholder="e.g. https://topdeck.gg/deck/..., https://moxfield.com/decks/..., https://archidekt.com/decks/...">
+          <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; font-size: 11px;">
+            <span style="background:#e0e0e0; border:1px solid #808080; padding:2px 6px; border-radius:3px;">🔥 TopDeck.gg</span>
+            <span style="background:#e0e0e0; border:1px solid #808080; padding:2px 6px; border-radius:3px;">✨ Moxfield</span>
+            <span style="background:#e0e0e0; border:1px solid #808080; padding:2px 6px; border-radius:3px;">🏛️ Archidekt</span>
+            <span style="background:#e0e0e0; border:1px solid #808080; padding:2px 6px; border-radius:3px;">🐟 MTGGoldfish</span>
+            <span style="background:#e0e0e0; border:1px solid #808080; padding:2px 6px; border-radius:3px;">🏆 MTGTop8</span>
+            <span style="background:#e0e0e0; border:1px solid #808080; padding:2px 6px; border-radius:3px;">🎲 Cube Cobra</span>
+            <span style="background:#e0e0e0; border:1px solid #808080; padding:2px 6px; border-radius:3px;">📋 Pastebin / Gist</span>
+          </div>
+          <p class="field-help" style="margin-top: 8px;">
+            The visualizer automatically fetches exact editions, finishes, and deck contents directly from the site!
           </p>
         </div>
 
@@ -475,9 +484,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/static/js/modal.js?v=20260826_05"></script>
-  <script src="/static/js/visualizer.js?v=20260826_05"></script>
-  <script src="/static/js/exporter.js?v=20260826_05"></script>
-  <script src="/static/js/app.js?v=20260826_05"></script>
+  <script src="/static/js/modal.js?v=20260826_06"></script>
+  <script src="/static/js/visualizer.js?v=20260826_06"></script>
+  <script src="/static/js/exporter.js?v=20260826_06"></script>
+  <script src="/static/js/app.js?v=20260826_06"></script>
 </body>
 </html>

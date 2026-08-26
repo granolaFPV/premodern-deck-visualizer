@@ -117,7 +117,7 @@ class App {
 
     const presetEx1 = document.getElementById('presetEx1');
     const presetEx2 = document.getElementById('presetEx2');
-    const presetMoxfield = document.getElementById('presetMoxfield');
+    const presetTopDeck = document.getElementById('presetTopDeck');
 
     // Menu Bar items
     document.getElementById('menuItemNew')?.addEventListener('click', () => openImport(false));
@@ -129,9 +129,9 @@ class App {
       this.loadDeck({ moxfield_url: EXAMPLE_2_MOXFIELD_URL, name: 'UR Counterburn' });
     });
 
-    const openImport = (isMoxfield = false) => {
+    const openImport = (isUrl = false) => {
       importModal.classList.add('active');
-      if (isMoxfield) {
+      if (isUrl) {
         tabUrl.click();
       } else {
         tabText.click();
@@ -162,32 +162,32 @@ class App {
     });
 
     // Presets
-    presetEx1.addEventListener('click', () => {
+    presetEx1?.addEventListener('click', () => {
       tabText.click();
       deckTextInput.value = EXAMPLE_1_TEXT;
     });
 
-    presetEx2.addEventListener('click', () => {
+    presetEx2?.addEventListener('click', () => {
       tabUrl.click();
       moxfieldUrlInput.value = EXAMPLE_2_MOXFIELD_URL;
     });
 
-    presetMoxfield.addEventListener('click', () => {
+    presetTopDeck?.addEventListener('click', () => {
       tabUrl.click();
-      moxfieldUrlInput.value = EXAMPLE_MOXFIELD_URL;
+      moxfieldUrlInput.value = 'https://topdeck.gg/deck/TopDeckInvi24/@zrob';
     });
 
     // Submit Import
     btnSubmitImport.addEventListener('click', () => {
-      const isMoxTab = tabUrl.classList.contains('active');
-      if (isMoxTab) {
+      const isUrlTab = tabUrl.classList.contains('active');
+      if (isUrlTab) {
         const url = moxfieldUrlInput.value.trim();
         if (!url) {
-          alert('Please enter a Moxfield deck URL.');
+          alert('Please enter a deck URL (TopDeck.gg, Moxfield, Archidekt, MTGGoldfish, MTGTop8, Cube Cobra, etc.).');
           return;
         }
         importModal.classList.remove('active');
-        this.loadDeck({ moxfield_url: url });
+        this.loadDeck({ url: url, moxfield_url: url });
       } else {
         const text = deckTextInput.value.trim();
         if (!text) {
@@ -290,8 +290,9 @@ class App {
     const loader = document.getElementById('appLoader');
     const statusText = document.getElementById('loadingStatusText');
     loader.classList.add('active');
-    statusText.textContent = payload.moxfield_url 
-      ? 'Fetching deck data from Moxfield API...' 
+    const isUrl = Boolean(payload.url || payload.moxfield_url);
+    statusText.textContent = isUrl 
+      ? 'Fetching deck data from URL...' 
       : 'Resolving Premodern printings with Scryfall...';
 
     this.setStatus('Loading and packing deck into visual grid...');
