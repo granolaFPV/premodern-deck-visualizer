@@ -152,9 +152,13 @@ body.retro-os-body {
   position: relative;
   padding: 3px 8px;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.menu-item:hover {
+.menu-item:hover,
+.menu-item.open {
   background: var(--win-title-blue);
   color: #ffffff;
 }
@@ -171,10 +175,11 @@ body.retro-os-body {
   border-bottom: 2px solid var(--win-border-darker);
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
   min-width: 220px;
-  z-index: 1000;
+  z-index: 10000;
 }
 
-.menu-item:hover .dropdown-menu {
+.menu-item:hover > .dropdown-menu,
+.menu-item.open > .dropdown-menu {
   display: block;
 }
 
@@ -323,6 +328,72 @@ body.retro-os-body {
   justify-content: center;
   align-items: flex-start;
   padding: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Playmat Scale Wrapper (Maintains exact layout box when playmat is zoomed/auto-fitted) */
+.playmat-scale-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  margin: 0 auto;
+  transition: width 0.1s ease, height 0.1s ease;
+}
+
+/* Floating Quick Zoom Controls */
+.viewport-zoom-bar {
+  position: fixed;
+  bottom: 30px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--win-bg);
+  border-top: 2px solid var(--win-border-light);
+  border-left: 2px solid var(--win-border-light);
+  border-right: 2px solid var(--win-border-darker);
+  border-bottom: 2px solid var(--win-border-darker);
+  padding: 3px 6px;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.55);
+  z-index: 500;
+  border-radius: 3px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.zoom-pill-btn {
+  background: var(--win-bg);
+  border-top: 1px solid var(--win-border-light);
+  border-left: 1px solid var(--win-border-light);
+  border-right: 1px solid var(--win-border-darker);
+  border-bottom: 1px solid var(--win-border-darker);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 26px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0 5px;
+  color: var(--win-text);
+}
+
+.zoom-pill-btn:active {
+  border-top: 1px solid var(--win-border-darker);
+  border-left: 1px solid var(--win-border-darker);
+  border-right: 1px solid var(--win-border-light);
+  border-bottom: 1px solid var(--win-border-light);
+  background: #d4d4d4;
+}
+
+.zoom-pill-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #222;
+  min-width: 40px;
+  text-align: center;
 }
 
 /* Playmat Surface — Clean table surface, cards basically touching */
@@ -689,7 +760,8 @@ body.retro-os-body {
   justify-content: center;
   padding: 4px 0 20px 0;
   width: 1058px; /* Matches exact width of 6x10 mainboard (10 * 104px + 9 * 2px) */
-  max-width: 100%;
+  min-width: 1058px;
+  flex-shrink: 0;
   position: relative;
   margin: 0 auto;
 }
@@ -697,7 +769,8 @@ body.retro-os-body {
 .sb-zipper-container {
   position: relative;
   width: 1058px;
-  max-width: 100%;
+  min-width: 1058px;
+  flex-shrink: 0;
   height: 280px; /* Snug height for 2-row zippered cards with zero gap */
 }
 
@@ -1827,10 +1900,6 @@ body.retro-os-body {
    ========================================================================== */
 
 @media (max-width: 768px) {
-  :root {
-    --card-width: 68px;
-  }
-
   body.retro-os-body {
     height: 100dvh;
     min-height: -webkit-fill-available;
@@ -1868,17 +1937,36 @@ body.retro-os-body {
     display: none; /* Hide minimize/maximize/close on mobile */
   }
 
+  /* Critical fix: Menubar must NOT have overflow-x: auto so dropdowns pop out freely */
   .retro-menubar {
-    overflow-x: auto;
+    overflow: visible !important;
     white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    padding: 2px 4px;
+    padding: 3px 6px;
     gap: 2px;
+    position: relative;
+    z-index: 9999;
   }
 
   .menu-item {
-    padding: 4px 6px;
-    font-size: 11px;
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10000;
+    max-width: 90vw;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  }
+
+  .dropdown-menu button {
+    min-height: 40px; /* Comfortable finger tap target */
+    padding: 10px 14px;
+    font-size: 13px;
+    white-space: normal;
+    word-break: break-word;
   }
 
   /* Mobile-friendly scrolling toolbar */
@@ -1938,13 +2026,35 @@ body.retro-os-body {
 
   /* Mobile Card Sizing & Playmat */
   .visualizer-viewport {
-    padding: 6px 4px 16px 4px;
+    padding: 8px 6px 70px 6px;
     -webkit-overflow-scrolling: touch;
-    justify-content: flex-start;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .viewport-zoom-bar {
+    bottom: 24px;
+    right: 12px;
+    padding: 4px 8px;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    z-index: 900;
+  }
+
+  .zoom-pill-btn {
+    min-width: 36px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .zoom-pill-label {
+    font-size: 11px;
+    min-width: 44px;
   }
 
   .playmat-surface {
-    padding: 12px 14px 20px 14px;
+    padding: 16px 18px 24px 18px;
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
   }
@@ -1960,11 +2070,6 @@ body.retro-os-body {
 
   .section-hint {
     font-size: 9px;
-  }
-
-  .sideboard-fan {
-    height: 95px;
-    margin-top: 4px;
   }
 
   /* Mobile Modals */

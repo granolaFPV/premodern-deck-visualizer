@@ -74,6 +74,7 @@ class App {
 
     // Start with a clean playmat and the welcome splash prompt
     this.visualizer.render();
+    setTimeout(() => this.fitToScreen(), 80);
   }
 
   initComponents() {
@@ -126,7 +127,35 @@ class App {
     const presetEx2 = document.getElementById('presetEx2');
     const presetTopDeck = document.getElementById('presetTopDeck');
 
-    // Menu Bar items
+    // Menu Bar items (Click and mobile touch support)
+    const menuItems = document.querySelectorAll('.retro-menubar .menu-item');
+    menuItems.forEach((item) => {
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.dropdown-menu button') || e.target.closest('.dropdown-menu a')) {
+          item.classList.remove('open');
+          return;
+        }
+        const wasOpen = item.classList.contains('open');
+        menuItems.forEach((m) => m.classList.remove('open'));
+        if (!wasOpen) {
+          item.classList.add('open');
+        }
+        e.stopPropagation();
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.retro-menubar')) {
+        menuItems.forEach((m) => m.classList.remove('open'));
+      }
+    });
+
+    document.querySelectorAll('.dropdown-menu button, .dropdown-menu a').forEach((el) => {
+      el.addEventListener('click', () => {
+        menuItems.forEach((m) => m.classList.remove('open'));
+      });
+    });
+
     document.getElementById('menuItemNew')?.addEventListener('click', () => openImport(false));
     document.getElementById('menuItemMoxfield')?.addEventListener('click', () => openImport(true));
     document.getElementById('menuItemEx1')?.addEventListener('click', () => {
@@ -294,17 +323,79 @@ class App {
     btnExport.addEventListener('click', triggerExport);
     menuExportPng?.addEventListener('click', triggerExport);
 
-    // Zoom controls
-    const playmatEl = document.getElementById('playmat');
+    // Zoom controls with scale wrapper sizing (centers and fits whole deck on mobile)
     const setZoom = (scale) => {
-      this.currentZoom = Math.max(0.4, Math.min(1.6, scale));
+      this.currentZoom = Math.max(0.18, Math.min(1.8, Math.round(scale * 100) / 100));
+      const playmatEl = document.getElementById('playmat');
+      const wrapper = document.getElementById('playmatWrapper');
+      if (!playmatEl) return;
+
       playmatEl.style.transform = `scale(${this.currentZoom})`;
-      playmatEl.style.transformOrigin = 'top center';
+      playmatEl.style.transformOrigin = 'top left';
+
+      if (wrapper) {
+        const unscaledW = playmatEl.offsetWidth || 1114;
+        const unscaledH = playmatEl.offsetHeight || 1200;
+        wrapper.style.width = `${Math.round(unscaledW * this.currentZoom)}px`;
+        wrapper.style.height = `${Math.round(unscaledH * this.currentZoom)}px`;
+      }
+
+      const zoomPillLabel = document.getElementById('zoomPillLabel');
+      if (zoomPillLabel) {
+        zoomPillLabel.textContent = `${Math.round(this.currentZoom * 100)}%`;
+      }
+    };
+    this.setZoom = setZoom;
+
+    this.fitToScreen = () => {
+      const viewport = document.getElementById('viewport');
+      const playmatEl = document.getElementById('playmat');
+      if (!viewport || !playmatEl) return;
+
+      const vpW = viewport.clientWidth;
+      const matW = playmatEl.offsetWidth || 1114;
+
+      if (vpW && vpW < matW + 24) {
+        // Auto scale to fit mobile or small window with comfortable padding
+        const fitScale = Math.max(0.2, Math.min(1.0, (vpW - 14) / matW));
+        this.setZoom(fitScale);
+      } else {
+        this.setZoom(1.0);
+      }
     };
 
-    document.getElementById('zoomInBtn')?.addEventListener('click', () => setZoom(this.currentZoom + 0.15));
-    document.getElementById('zoomOutBtn')?.addEventListener('click', () => setZoom(this.currentZoom - 0.15));
-    document.getElementById('zoomResetBtn')?.addEventListener('click', () => setZoom(1.0));
+    // View menu zoom buttons
+    document.getElementById('zoomInBtn')?.addEventListener('click', () => this.setZoom(this.currentZoom + 0.15));
+    document.getElementById('zoomOutBtn')?.addEventListener('click', () => this.setZoom(this.currentZoom - 0.15));
+    document.getElementById('zoomResetBtn')?.addEventListener('click', () => this.fitToScreen());
+
+    // Floating viewport zoom bar buttons
+    document.getElementById('btnFloatZoomIn')?.addEventListener('click', () => this.setZoom(this.currentZoom + 0.15));
+    document.getElementById('btnFloatZoomOut')?.addEventListener('click', () => this.setZoom(this.currentZoom - 0.15));
+    document.getElementById('btnFloatZoomFit')?.addEventListener('click', () => this.fitToScreen());
+
+    // Window resize: auto fit on mobile
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768) {
+        this.fitToScreen();
+      }
+    });
+
+    // Mobile double-tap viewport to toggle fit vs 100% zoom
+    let lastTap = 0;
+    document.getElementById('viewport')?.addEventListener('touchend', (e) => {
+      if (e.target.closest('.viewport-zoom-bar') || e.target.closest('.card-item')) return;
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        e.preventDefault();
+        if (this.currentZoom < 0.75) {
+          this.setZoom(1.0);
+        } else {
+          this.fitToScreen();
+        }
+      }
+      lastTap = now;
+    });
 
     // About Premodern dialog
     document.getElementById('menuAboutPremodern')?.addEventListener('click', () => {
@@ -372,6 +463,9 @@ class App {
 
       this.currentDeck = data;
       this.visualizer.setDeckData(data);
+      requestAnimationFrame(() => {
+        this.fitToScreen();
+      });
 
       const mainCount = data.total_main || 0;
       const sbCount = data.total_sb || 0;

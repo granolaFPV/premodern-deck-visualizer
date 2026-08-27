@@ -202,8 +202,10 @@
     <!-- Main Workspace Container -->
     <main class="visualizer-viewport" id="viewport">
       
-      <!-- Table surface / Playmat -->
-      <div class="playmat-surface heather" id="playmat">
+      <!-- Scale Wrapper for auto-fit zoom on mobile & small screens -->
+      <div class="playmat-scale-wrapper" id="playmatWrapper">
+        <!-- Table surface / Playmat -->
+        <div class="playmat-surface heather" id="playmat">
         
         <!-- Welcome Splash Box (Empty State on first visit or when no deck is loaded) -->
         <div class="welcome-splash" id="welcomeSplash">
@@ -240,6 +242,15 @@
           </div>
         </section>
 
+        </div>
+      </div>
+
+      <!-- Quick Zoom Controls (Bottom right of viewport) -->
+      <div class="viewport-zoom-bar" id="viewportZoomBar">
+        <button class="zoom-pill-btn" id="btnFloatZoomOut" title="Zoom Out (−)">−</button>
+        <button class="zoom-pill-btn" id="btnFloatZoomFit" title="Fit Entire Deck on Screen">Fit</button>
+        <button class="zoom-pill-btn" id="btnFloatZoomIn" title="Zoom In (+)">+</button>
+        <span class="zoom-pill-label" id="zoomPillLabel">100%</span>
       </div>
     </main>
 
