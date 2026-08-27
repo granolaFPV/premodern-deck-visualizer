@@ -108,87 +108,55 @@ class DeckExporter {
     const innerW = cardW - sleevePad * 2;
     const innerH = cardH - sleevePad * 2;
 
-    const wearScore = Math.abs(hash) % 100;
-    // Archetypes:
-    // wearScore < 25: Lightly Played (only subtle corner dings & tiny edge fleck)
-    // 25 <= wearScore < 55: Top-Edge Shuffle Wear (heavy white fraying along top border & top corners)
-    // 55 <= wearScore < 80: Side / Border Wear (left & right border whitening, dinged white corners)
-    // wearScore >= 80: Heavily Played / Relic (all borders white, rough white cardboard chipping, crease)
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
-    
-    if (wearScore >= 25 && wearScore < 55) {
-      // Heavy top-edge shuffle wear
-      for (let x = innerX + 4; x < innerX + innerW - 4; x += 4 + rnd() * 8) {
-        const len = 3 + rnd() * 8;
-        const depth = 1.5 + rnd() * 3.2;
-        ctx.fillRect(x, innerY, len, depth);
+    // 1. Edge Whitening / Frayed Cardstock Core (Cardboard exposure along outer edges)
+    ctx.fillStyle = 'rgba(240, 235, 220, 0.7)';
+    // Top & Bottom edges
+    for (let x = innerX + 6; x < innerX + innerW - 6; x += 10 + rnd() * 16) {
+      const wearLen = 6 + rnd() * 16;
+      const wearDepth = 1.2 + rnd() * 2.5;
+      if (rnd() > 0.28) {
+        ctx.fillRect(x, innerY, wearLen, wearDepth);
       }
-      ctx.beginPath();
-      ctx.arc(innerX + 3, innerY + 3, 4 + rnd() * 4, 0, Math.PI * 2);
-      ctx.arc(innerX + innerW - 3, innerY + 3, 4 + rnd() * 4, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (wearScore >= 55 && wearScore < 80) {
-      // Left & Right border whitening
-      for (let y = innerY + 4; y < innerY + innerH - 4; y += 5 + rnd() * 10) {
-        const len = 4 + rnd() * 10;
-        const depth = 1.5 + rnd() * 2.8;
-        ctx.fillRect(innerX, y, depth, len);
-        ctx.fillRect(innerX + innerW - depth, y, depth, len);
+      if (rnd() > 0.32) {
+        ctx.fillRect(x, innerY + innerH - wearDepth, wearLen, wearDepth);
       }
-      ctx.beginPath();
-      ctx.arc(innerX + 3, innerY + 3, 3 + rnd() * 3, 0, Math.PI * 2);
-      ctx.arc(innerX + 3, innerY + innerH - 3, 3 + rnd() * 3, 0, Math.PI * 2);
-      ctx.arc(innerX + innerW - 3, innerY + innerH - 3, 3 + rnd() * 3, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (wearScore >= 80) {
-      // Heavily Played / Relic: all 4 borders chipped and frayed white
-      for (let x = innerX + 2; x < innerX + innerW - 2; x += 4 + rnd() * 8) {
-        const len = 4 + rnd() * 10;
-        const depth = 2.0 + rnd() * 3.5;
-        ctx.fillRect(x, innerY, len, depth);
-        ctx.fillRect(x, innerY + innerH - depth, len, depth);
+    }
+    // Left & Right edges
+    for (let y = innerY + 6; y < innerY + innerH - 6; y += 10 + rnd() * 16) {
+      const wearLen = 6 + rnd() * 16;
+      const wearDepth = 1.2 + rnd() * 2.5;
+      if (rnd() > 0.28) {
+        ctx.fillRect(innerX, y, wearDepth, wearLen);
       }
-      for (let y = innerY + 2; y < innerY + innerH - 2; y += 4 + rnd() * 8) {
-        const len = 4 + rnd() * 10;
-        const depth = 2.0 + rnd() * 3.5;
-        ctx.fillRect(innerX, y, depth, len);
-        ctx.fillRect(innerX + innerW - depth, y, depth, len);
-      }
-      [ [innerX, innerY], [innerX + innerW - 6, innerY], [innerX, innerY + innerH - 6], [innerX + innerW - 6, innerY + innerH - 6] ].forEach(([cx, cy]) => {
-        ctx.beginPath();
-        ctx.arc(cx + 3, cy + 3, 5 + rnd() * 5, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      // Stress crease
-      const creaseX = innerX + innerW - 40;
-      const creaseY = innerY + 15 + rnd() * 20;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(creaseX, creaseY);
-      ctx.lineTo(creaseX + 35, creaseY + 35);
-      ctx.stroke();
-    } else {
-      // Lightly played: subtle small nicks
-      if (rnd() > 0.4) {
-        ctx.fillRect(innerX + innerW * 0.3 + rnd() * 20, innerY, 4 + rnd() * 6, 1.2);
-      }
-      if (rnd() > 0.4) {
-        ctx.beginPath();
-        ctx.arc(innerX + 3, innerY + 3, 2.5, 0, Math.PI * 2);
-        ctx.fill();
+      if (rnd() > 0.32) {
+        ctx.fillRect(innerX + innerW - wearDepth, y, wearDepth, wearLen);
       }
     }
 
-    // Faint playwear scuffs
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+    // 2. Corner dings / whitening
+    const corners = [
+      [innerX, innerY],
+      [innerX + innerW - 8, innerY],
+      [innerX, innerY + innerH - 8],
+      [innerX + innerW - 8, innerY + innerH - 8]
+    ];
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    corners.forEach(([cx, cy]) => {
+      if (rnd() > 0.2) {
+        ctx.beginPath();
+        ctx.arc(cx + 4, cy + 4, 3 + rnd() * 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // 3. Playmat / Fingernail Scratches
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
     ctx.lineWidth = 0.8;
-    const numScratches = Math.floor(1 + rnd() * 3);
+    const numScratches = Math.floor(2 + rnd() * 4);
     for (let i = 0; i < numScratches; i++) {
       const sx = innerX + 20 + rnd() * (innerW - 40);
       const sy = innerY + 25 + rnd() * (innerH - 50);
-      const len = 15 + rnd() * 30;
+      const len = 18 + rnd() * 40;
       const angle = (rnd() - 0.5) * Math.PI * 0.85;
       ctx.beginPath();
       ctx.moveTo(sx, sy);
@@ -196,112 +164,32 @@ class DeckExporter {
       ctx.stroke();
     }
 
-    // 5. Vintage cardstock patina / slight sepia fading
-    ctx.fillStyle = 'rgba(100, 75, 30, 0.07)';
-    this.drawRoundedRect(ctx, innerX, innerY, innerW, innerH, cardRadius);
-    ctx.fill();
+    // 4. Subtle diagonal corner stress crease (simulates classic HP/DMG pocket bend)
+    if (rnd() > 0.45) {
+      const isTopRight = rnd() > 0.5;
+      const creaseX = isTopRight ? innerX + innerW - 35 : innerX + 10;
+      const creaseY = innerY + 14 + rnd() * 20;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(creaseX, creaseY);
+      ctx.lineTo(creaseX + 28, creaseY + 28);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.moveTo(creaseX + 1, creaseY + 1);
+      ctx.lineTo(creaseX + 29, creaseY + 29);
+      ctx.stroke();
+    }
+
+    // 5. Vintage Cardstock Patina (Subtle yellowing & center scuff haze)
+    ctx.fillStyle = 'rgba(220, 195, 150, 0.08)';
+    ctx.fillRect(innerX, innerY, innerW, innerH);
 
     ctx.restore();
   }
 
-  drawSingleCard(ctx, cardInst, cx, cy, rotDeg, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate((rotDeg * Math.PI) / 180);
-
-    // Diffuse card drop shadow on playmat
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 4;
-
-    // Splayed stacked card layers (if stacked)
-    if (cardInst.is_stacked) {
-      const stackOffsets = [
-        { dx: 8, dy: -8, rot: 2.2 },
-        { dx: 4, dy: -4, rot: 1.1 }
-      ];
-      for (const off of stackOffsets) {
-        ctx.save();
-        ctx.translate(off.dx, off.dy);
-        ctx.rotate((off.rot * Math.PI) / 180);
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 3;
-        this.drawRoundedRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, sleeveRadius);
-        ctx.fillStyle = sleeveStyle === 'gold' ? '#9a7b28' : '#141416';
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    // Outer Sleeve
-    this.drawRoundedRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, sleeveRadius);
-    if (sleeveStyle === 'gold') {
-      ctx.fillStyle = '#c5a038';
-    } else {
-      ctx.fillStyle = '#0a0a0c'; // Black sleeve
-    }
-    ctx.fill();
-
-    // Reset shadow for card image
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-
-    // Inner Card Image
-    const imgUrl = cardInst.card_data?.image_large || cardInst.card_data?.image_url;
-    const img = imageCache.get(imgUrl);
-    if (img) {
-      ctx.save();
-      this.drawRoundedRect(
-        ctx,
-        -cardW / 2 + sleevePad,
-        -cardH / 2 + sleevePad,
-        cardW - sleevePad * 2,
-        cardH - sleevePad * 2,
-        cardRadius
-      );
-      ctx.clip();
-      ctx.drawImage(
-        img,
-        -cardW / 2 + sleevePad,
-        -cardH / 2 + sleevePad,
-        cardW - sleevePad * 2,
-        cardH - sleevePad * 2
-      );
-      ctx.restore();
-    }
-
-    // Posca Border Alter
-    const poscaColor = cardInst.card_data?.posca_border || cardInst.posca_border;
-    if (poscaColor) {
-      this.drawPoscaBorder(ctx, cardW, cardH, sleevePad, cardRadius, poscaColor);
-    }
-
-    // Distressify Wear & Scuffs
-    if (isDistressed) {
-      this.drawDistressWear(ctx, cardW, cardH, sleevePad, cardRadius, cardInst.instance_id || 'card');
-    }
-
-    // Subtle specular sleeve edge highlight
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 1;
-    this.drawRoundedRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, sleeveRadius);
-    ctx.stroke();
-
-    // 3D Polyhedral Quantity Die (for stacked cards)
-    if (cardInst.is_stacked && showDice) {
-      const count = cardInst.stack_count || 1;
-      this.drawQuantityDie(ctx, cardW, cardH, count);
-    }
-
-    ctx.restore();
-  }
-
-  async exportDeck(deckData, playmatStyle = 'heather', sleeveStyle = 'black', realismMultiplier = 1.0, isDistressed = false, jitterPercent = 45, showDice = true) {
+  async exportDeck(deckData, playmatStyle = 'heather', sleeveStyle = 'black', realismMultiplier = 1.0, isDistressed = false, jitterPercent = 45) {
     this.deckName = deckData.name || 'Premodern_Deck';
     this.modalEl.classList.add('active');
     this.spinner.classList.add('active');
@@ -384,7 +272,7 @@ class DeckExporter {
 
     await Promise.all(loadPromises);
 
-    // 3. Layout Dimensions
+    // 3. Layout Dimensions — Cards basically touching, no headers, pure table photo
     const cardW = 180;
     const cardH = Math.round(cardW * (88 / 63)); // ~251px
     const gapX = 2; // Basically touching
@@ -393,177 +281,193 @@ class DeckExporter {
     const sleeveRadius = 6;
     const cardRadius = 5;
 
-    const layout = deckData.layout || mb?.layout || 'classic';
+    const gridW = 10 * cardW + 9 * gapX; // 1818px
+    const gridH = 6 * cardH + 5 * gapY;  // 1516px
+    const sbGap = 50; // Clean space between mainboard and sideboard
+    const sbRowStepY = 115;
+    const sbHeight = 2 * sbRowStepY + cardH; // ~480px
 
-    if (layout === 'type_columns') {
-      const cols = mb?.cols || 6;
-      const colGap = 16;
-      const stepY = Math.round(cardH * 0.35); // Overlapping cascade
-      const totalColsW = cols * cardW + (cols - 1) * colGap;
-      const startX = Math.round((W - totalColsW) / 2);
-      const startY = 70;
+    const startX = Math.round((W - gridW) / 2);
+    const startY = 70;
 
-      // Draw columns
-      if (mb && mb.grid) {
-        for (let c = 0; c < cols; c++) {
-          for (let r = 0; r < (mb.rows || 6); r++) {
-            const cardInst = mb.grid[r][c];
-            if (!cardInst) continue;
-            const rotDeg = (cardInst.jitter?.rotation || 0) * jitterFactors.rotMult;
-            const cx = startX + c * (cardW + colGap) + cardW / 2;
-            const cy = startY + r * stepY + cardH / 2;
-            this.drawSingleCard(ctx, cardInst, cx, cy, rotDeg, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-          }
-        }
-      }
+    // 4. Draw Mainboard 6x10 Grid (Cards touching with natural sleeve edges)
+    if (mb && mb.grid) {
+      for (let r = 0; r < (mb.rows || 6); r++) {
+        for (let c = 0; c < (mb.cols || 10); c++) {
+          const cardInst = mb.grid[r][c];
+          if (!cardInst) continue;
 
-      // Draw Sideboard in clean flat row below
-      const sb = deckData.sideboard;
-      if (sb && sb.cards && sb.cards.length > 0) {
-        const sbStartY = startY + (mb.rows || 6) * stepY + cardH + 50;
-        const totalSb = sb.cards.length;
-        const sbCols = Math.min(8, totalSb);
-        const sbGapX = 8;
-        const sbTotalW = sbCols * cardW + (sbCols - 1) * sbGapX;
-        const sbStartX = Math.round((W - sbTotalW) / 2);
-        sb.cards.forEach((cardInst, idx) => {
-          const r = Math.floor(idx / 8);
-          const col = idx % 8;
-          const cx = sbStartX + col * (cardW + sbGapX) + cardW / 2;
-          const cy = sbStartY + r * (cardH + 12) + cardH / 2;
-          this.drawSingleCard(ctx, cardInst, cx, cy, 0, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-        });
-      }
-    } else if (layout === 'sideboard_right') {
-      const mbCols = 8;
-      const mbW = mbCols * cardW + (mbCols - 1) * gapX;
-      const sbCols = 2;
-      const sbW = sbCols * cardW + (sbCols - 1) * 8;
-      const totalW = mbW + 36 + sbW;
-      const startX = Math.round((W - totalW) / 2);
-      const startY = 70;
+          const baseX = startX + c * (cardW + gapX);
+          const baseY = startY + r * (cardH + gapY);
 
-      // Draw Mainboard (8 columns)
-      if (mb && mb.grid) {
-        for (let r = 0; r < (mb.rows || 6); r++) {
-          for (let c = 0; c < (mb.cols || 8); c++) {
-            const cardInst = mb.grid[r][c];
-            if (!cardInst) continue;
-            const rotDeg = (cardInst.jitter?.rotation || 0) * jitterFactors.rotMult;
-            const dx = (cardInst.jitter?.dx || 0) * jitterFactors.dMult;
-            const dy = (cardInst.jitter?.dy || 0) * jitterFactors.dMult;
-            const cx = startX + c * (cardW + gapX) + cardW / 2 + dx;
-            const cy = startY + r * (cardH + gapY) + cardH / 2 + dy;
-            this.drawSingleCard(ctx, cardInst, cx, cy, rotDeg, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-          }
-        }
-      }
+          // Jitter (Natural subtle misalignment up to 350% haphazard chaos)
+          const rotDeg = (cardInst.jitter?.rotation || 0) * jitterFactors.rotMult;
+          const dx = (cardInst.jitter?.dx || 0) * jitterFactors.dMult;
+          const dy = (cardInst.jitter?.dy || 0) * jitterFactors.dMult;
 
-      // Draw Sideboard (2 vertical columns on right)
-      const sb = deckData.sideboard;
-      if (sb && sb.cards && sb.cards.length > 0) {
-        const sbStartX = startX + mbW + 36;
-        const sbStepY = Math.round(cardH * 0.45);
-        sb.cards.forEach((cardInst) => {
-          const r = cardInst.sb_row || 0;
-          const col = cardInst.sb_col || 0;
-          const cx = sbStartX + col * (cardW + 8) + cardW / 2;
-          const cy = startY + r * sbStepY + cardH / 2;
-          this.drawSingleCard(ctx, cardInst, cx, cy, 0, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-        });
-      }
-    } else if (layout === 'horizontal_cascade') {
-      const stepX = Math.round(cardW * 0.36);
-      const rows = mb?.rows || 3;
-      const startY = 80;
-      const tierH = cardH + 20;
+          const cx = baseX + cardW / 2 + dx;
+          const cy = baseY + cardH / 2 + dy;
 
-      if (mb && mb.grid) {
-        for (let r = 0; r < rows; r++) {
-          const tierCards = [];
-          for (let c = 0; c < (mb.cols || 24); c++) {
-            if (mb.grid[r][c]) tierCards.push(mb.grid[r][c]);
-          }
-          const tierW = (tierCards.length - 1) * stepX + cardW;
-          const startX = Math.round((W - tierW) / 2);
-          tierCards.forEach((cardInst, idx) => {
-            const rotDeg = (cardInst.jitter?.rotation || 0) * jitterFactors.rotMult;
-            const cx = startX + idx * stepX + cardW / 2;
-            const cy = startY + r * tierH + cardH / 2;
-            this.drawSingleCard(ctx, cardInst, cx, cy, rotDeg, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-          });
-        }
-      }
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate((rotDeg * Math.PI) / 180);
 
-      // Sideboard below
-      const sb = deckData.sideboard;
-      if (sb && sb.cards && sb.cards.length > 0) {
-        const sbStartY = startY + rows * tierH + 40;
-        const sbCols = Math.min(8, sb.cards.length);
-        const sbGapX = 8;
-        const sbTotalW = sbCols * cardW + (sbCols - 1) * sbGapX;
-        const sbStartX = Math.round((W - sbTotalW) / 2);
-        sb.cards.forEach((cardInst, idx) => {
-          const r = Math.floor(idx / 8);
-          const col = idx % 8;
-          const cx = sbStartX + col * (cardW + sbGapX) + cardW / 2;
-          const cy = sbStartY + r * (cardH + 12) + cardH / 2;
-          this.drawSingleCard(ctx, cardInst, cx, cy, 0, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-        });
-      }
-    } else {
-      // Classic Grid & Chaos Table
-      const gridW = 10 * cardW + 9 * gapX;
-      const gridH = 6 * cardH + 5 * gapY;
-      const sbGap = 50;
-      const startX = Math.round((W - gridW) / 2);
-      const startY = 70;
+          // Diffuse card drop shadow on playmat
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetX = 1;
+          ctx.shadowOffsetY = 4;
 
-      if (mb && mb.grid) {
-        for (let r = 0; r < (mb.rows || 6); r++) {
-          for (let c = 0; c < (mb.cols || 10); c++) {
-            const cardInst = mb.grid[r][c];
-            if (!cardInst) continue;
-            const rotDeg = (cardInst.jitter?.rotation || 0) * jitterFactors.rotMult;
-            const dx = (cardInst.jitter?.dx || 0) * jitterFactors.dMult;
-            const dy = (cardInst.jitter?.dy || 0) * jitterFactors.dMult;
-            const cx = startX + c * (cardW + gapX) + cardW / 2 + dx;
-            const cy = startY + r * (cardH + gapY) + cardH / 2 + dy;
-            this.drawSingleCard(ctx, cardInst, cx, cy, rotDeg, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-          }
-        }
-      }
-
-      // Draw Sideboard in 38° Angled Fan
-      const sb = deckData.sideboard;
-      if (sb && sb.cards && sb.cards.length > 0) {
-        const sbStartY = startY + gridH + sbGap;
-        const theta = 38 * (Math.PI / 180);
-        const halfProjW = (cardW * Math.cos(theta) + cardH * Math.sin(theta)) / 2;
-        const minCx = startX + halfProjW;
-        const maxCx = startX + gridW - halfProjW;
-        const stepX = (maxCx - minCx) / 7;
-        const deltaY = 166;
-        const row0Y = sbStartY + 155;
-        const row1Y = row0Y + deltaY;
-
-        sb.cards.forEach((cardInst) => {
-          const r = cardInst.sb_row || 0;
-          const col = cardInst.sb_col || 0;
-          let cx, cy;
-          if (r === 0) {
-            cx = minCx + col * stepX;
-            cy = row0Y;
+          // Outer Sleeve
+          this.drawRoundedRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, sleeveRadius);
+          if (sleeveStyle === 'gold') {
+            ctx.fillStyle = '#c5a038';
           } else {
-            cx = minCx + (col + 0.5) * stepX;
-            cy = row1Y;
+            ctx.fillStyle = '#0a0a0c'; // Black sleeve
           }
-          const baseAngle = -38.0;
-          const angleDiff = ((cardInst.angle || baseAngle) - baseAngle) * jitterFactors.sbMult;
-          const angle = baseAngle + angleDiff;
-          this.drawSingleCard(ctx, cardInst, cx, cy, angle, cardW, cardH, sleeveRadius, sleevePad, cardRadius, sleeveStyle, isDistressed, showDice, imageCache);
-        });
+          ctx.fill();
+
+          // Reset shadow for card image
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+
+          // Inner Card Image
+          const imgUrl = cardInst.card_data?.image_large || cardInst.card_data?.image_url;
+          const img = imageCache.get(imgUrl);
+          if (img) {
+            ctx.save();
+            this.drawRoundedRect(
+              ctx,
+              -cardW / 2 + sleevePad,
+              -cardH / 2 + sleevePad,
+              cardW - sleevePad * 2,
+              cardH - sleevePad * 2,
+              cardRadius
+            );
+            ctx.clip();
+            ctx.drawImage(
+              img,
+              -cardW / 2 + sleevePad,
+              -cardH / 2 + sleevePad,
+              cardW - sleevePad * 2,
+              cardH - sleevePad * 2
+            );
+            ctx.restore();
+          }
+
+          // Posca Border Alter
+          const poscaColor = cardInst.card_data?.posca_border || cardInst.posca_border;
+          if (poscaColor) {
+            this.drawPoscaBorder(ctx, cardW, cardH, sleevePad, cardRadius, poscaColor);
+          }
+
+          // Distressify Wear & Scuffs
+          if (isDistressed) {
+            this.drawDistressWear(ctx, cardW, cardH, sleevePad, cardRadius, cardInst.instance_id || `${r}_${c}`);
+          }
+
+          // Subtle specular sleeve edge highlight
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+          ctx.lineWidth = 1;
+          this.drawRoundedRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, sleeveRadius);
+          ctx.stroke();
+
+          ctx.restore();
+        }
       }
+    }
+
+    // 5. Draw Sideboard (Angled Fan Display directly below mainboard, no header)
+    const sb = deckData.sideboard;
+    if (sb && sb.cards && sb.cards.length > 0) {
+      const sbStartY = startY + gridH + sbGap;
+      const theta = 38 * (Math.PI / 180);
+      const halfProjW = (cardW * Math.cos(theta) + cardH * Math.sin(theta)) / 2;
+      const minCx = startX + halfProjW;
+      const maxCx = startX + gridW - halfProjW;
+      const stepX = (maxCx - minCx) / 7;
+      const deltaY = 166;
+      const row0Y = sbStartY + 155;
+      const row1Y = row0Y + deltaY;
+
+      sb.cards.forEach((cardInst) => {
+        const r = cardInst.sb_row || 0;
+        const col = cardInst.sb_col || 0;
+        let cx, cy;
+        if (r === 0) {
+          cx = minCx + col * stepX;
+          cy = row0Y;
+        } else {
+          cx = minCx + (col + 0.5) * stepX;
+          cy = row1Y;
+        }
+        const baseAngle = -38.0;
+        const angleDiff = ((cardInst.angle || baseAngle) - baseAngle) * jitterFactors.sbMult;
+        const angle = baseAngle + angleDiff;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((angle * Math.PI) / 180);
+
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 5;
+
+        this.drawRoundedRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, sleeveRadius);
+        if (sleeveStyle === 'gold') {
+          ctx.fillStyle = '#c5a038';
+        } else {
+          ctx.fillStyle = '#0a0a0c';
+        }
+        ctx.fill();
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        const imgUrl = cardInst.card_data?.image_large || cardInst.card_data?.image_url;
+        const img = imageCache.get(imgUrl);
+        if (img) {
+          ctx.save();
+          this.drawRoundedRect(
+            ctx,
+            -cardW / 2 + sleevePad,
+            -cardH / 2 + sleevePad,
+            cardW - sleevePad * 2,
+            cardH - sleevePad * 2,
+            cardRadius
+          );
+          ctx.clip();
+          ctx.drawImage(
+            img,
+            -cardW / 2 + sleevePad,
+            -cardH / 2 + sleevePad,
+            cardW - sleevePad * 2,
+            cardH - sleevePad * 2
+          );
+          ctx.restore();
+        }
+
+        const poscaColor = cardInst.card_data?.posca_border || cardInst.posca_border;
+        if (poscaColor) {
+          this.drawPoscaBorder(ctx, cardW, cardH, sleevePad, cardRadius, poscaColor);
+        }
+
+        if (isDistressed) {
+          this.drawDistressWear(ctx, cardW, cardH, sleevePad, cardRadius, cardInst.instance_id || `sb_${col}`);
+        }
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        this.drawRoundedRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, sleeveRadius);
+        ctx.stroke();
+
+        ctx.restore();
+      });
     }
 
     // Complete Export Blob (No watermarks, no added text — authentic table photo)
@@ -823,55 +727,6 @@ class DeckExporter {
     ctx.strokeRect(20, 20, W - 40, H - 40);
     ctx.restore();
   }
-
-  drawQuantityDie(ctx, cardW, cardH, count) {
-    ctx.save();
-    // Center die in the middle of the card stack
-    const dieSize = 38;
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 4;
-
-    ctx.translate(0, 0);
-    ctx.rotate((-5 * Math.PI) / 180);
-
-    // Die body
-    this.drawRoundedRect(ctx, -dieSize / 2, -dieSize / 2, dieSize, dieSize, 7);
-    const grad = ctx.createLinearGradient(-dieSize / 2, -dieSize / 2, dieSize / 2, dieSize / 2);
-    grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.5, '#e2e8f0');
-    grad.addColorStop(1, '#94a3b8');
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Reset shadow
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-
-    // Die bevel edge
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Inner highlight
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.lineWidth = 1;
-    this.drawRoundedRect(ctx, -dieSize / 2 + 1.5, -dieSize / 2 + 1.5, dieSize - 3, dieSize - 3, 5);
-    ctx.stroke();
-
-    // Die quantity text
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 20px "IBM Plex Mono", monospace, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(count), 0, 1);
-
-    ctx.restore();
-  }
-
   drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);

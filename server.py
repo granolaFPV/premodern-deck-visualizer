@@ -325,20 +325,11 @@ class DeckVisualizerHandler(BaseHTTPRequestHandler):
                 })
 
             # Pack boards
-            layout = req_data.get('layout', 'classic')
-            stack_basics = bool(req_data.get('stack_basics', False))
-            stack_all_multiples = bool(req_data.get('stack_all_multiples', False))
-            packed_mb, packed_sb = grid_packer.pack_deck(
-                main_groups, sb_groups,
-                layout=layout,
-                stack_basics=stack_basics,
-                stack_all_multiples=stack_all_multiples
-            )
+            packed_mb, packed_sb = grid_packer.pack_deck(main_groups, sb_groups)
 
             response = {
                 'name': deck_name,
                 'format': deck_format,
-                'layout': layout,
                 'mainboard': packed_mb,
                 'sideboard': packed_sb,
                 'main_groups': main_groups,
@@ -349,21 +340,12 @@ class DeckVisualizerHandler(BaseHTTPRequestHandler):
             self.send_json(response)
             return
 
-        # 3. API: Repack Grid (Instant toggle without calling Scryfall)
+        # 3. API: Repack Grid
         if path == '/api/repack-grid':
             main_groups = req_data.get('main_groups', [])
             sb_groups = req_data.get('sb_groups', [])
-            layout = req_data.get('layout', 'classic')
-            stack_basics = bool(req_data.get('stack_basics', False))
-            stack_all_multiples = bool(req_data.get('stack_all_multiples', False))
-            packed_mb, packed_sb = grid_packer.pack_deck(
-                main_groups, sb_groups,
-                layout=layout,
-                stack_basics=stack_basics,
-                stack_all_multiples=stack_all_multiples
-            )
+            packed_mb, packed_sb = grid_packer.pack_deck(main_groups, sb_groups)
             self.send_json({
-                'layout': layout,
                 'mainboard': packed_mb,
                 'sideboard': packed_sb,
                 'total_main': sum(g['quantity'] for g in main_groups),

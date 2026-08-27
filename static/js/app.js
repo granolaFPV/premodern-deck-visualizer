@@ -68,10 +68,6 @@ class App {
   constructor() {
     this.currentDeck = null;
     this.currentZoom = 1.0;
-    this.stackBasics = false;
-    this.stackMultiples = false;
-    this.showDice = true;
-    this.currentLayout = 'classic';
 
     this.initComponents();
     this.bindUIEvents();
@@ -243,15 +239,6 @@ class App {
       });
     });
 
-    // Layout Selector
-    const layoutSelect = document.getElementById('layoutSelect');
-    if (layoutSelect) {
-      layoutSelect.addEventListener('change', (e) => {
-        this.currentLayout = e.target.value;
-        this.repackDeck();
-      });
-    }
-
     // Jitter slider & button
     const realismSlider = document.getElementById('realismSlider');
     const realismVal = document.getElementById('realismVal');
@@ -283,49 +270,10 @@ class App {
         btnDistressify.classList.toggle('active', nextState);
         this.visualizer.setDistressed(nextState);
         if (nextState) {
-          this.setStatus('Distressify ON: Authentic edge whitening, frayed borders, and card wear.');
+          this.setStatus('Distressify ON: Simulating vintage Heavily Played & Damaged cards with edge wear, scuffs, and aging.');
         } else {
           this.setStatus('Distressify OFF: Clean card condition restored.');
         }
-      });
-    }
-
-    // Stack Basics toggle button
-    const btnStackBasics = document.getElementById('btnStackBasics');
-    if (btnStackBasics) {
-      btnStackBasics.addEventListener('click', () => {
-        this.stackBasics = !this.stackBasics;
-        if (this.stackBasics && this.stackMultiples) {
-          this.stackMultiples = false;
-          document.getElementById('btnStackMultiples')?.classList.remove('active');
-        }
-        btnStackBasics.classList.toggle('active', this.stackBasics);
-        this.repackDeck();
-      });
-    }
-
-    // Stack All Multiples toggle button
-    const btnStackMultiples = document.getElementById('btnStackMultiples');
-    if (btnStackMultiples) {
-      btnStackMultiples.addEventListener('click', () => {
-        this.stackMultiples = !this.stackMultiples;
-        if (this.stackMultiples && this.stackBasics) {
-          this.stackBasics = false;
-          document.getElementById('btnStackBasics')?.classList.remove('active');
-        }
-        btnStackMultiples.classList.toggle('active', this.stackMultiples);
-        this.repackDeck();
-      });
-    }
-
-    // Show/Hide Dice toggle button
-    const btnToggleDice = document.getElementById('btnToggleDice');
-    if (btnToggleDice) {
-      btnToggleDice.addEventListener('click', () => {
-        this.showDice = !this.showDice;
-        btnToggleDice.classList.toggle('active', this.showDice);
-        this.visualizer.setShowDice(this.showDice);
-        this.setStatus(this.showDice ? 'Quantity dice displayed on stacked cards.' : 'Quantity dice hidden.');
       });
     }
 
@@ -340,8 +288,7 @@ class App {
         sleeveSelect.value,
         this.visualizer.realismMultiplier,
         this.visualizer.isDistressed,
-        this.visualizer.jitterPercent,
-        this.showDice
+        this.visualizer.jitterPercent
       );
     };
     btnExport.addEventListener('click', triggerExport);
@@ -373,40 +320,7 @@ class App {
     this.versionModal.open(cardInstance);
   }
 
-  async repackDeck() {
-    if (!this.currentDeck || !this.currentDeck.main_groups) return;
-    const layout = document.getElementById('layoutSelect')?.value || this.currentLayout || 'classic';
-    this.currentLayout = layout;
-    try {
-      this.setStatus(`Repacking layout: ${layout}...`);
-      const resp = await fetch('/api/repack-grid', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          main_groups: this.currentDeck.main_groups,
-          sb_groups: this.currentDeck.sb_groups,
-          layout: layout,
-          stack_basics: this.stackBasics,
-          stack_all_multiples: this.stackMultiples
-        })
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        this.currentDeck.layout = data.layout;
-        this.currentDeck.mainboard = data.mainboard;
-        this.currentDeck.sideboard = data.sideboard;
-        this.visualizer.setDeckData(this.currentDeck);
-        this.setStatus(`Layout updated: ${layout}`);
-      }
-    } catch (err) {
-      console.error('Failed to repack deck:', err);
-    }
-  }
-
   async loadDeck(payload) {
-    payload.stack_basics = this.stackBasics;
-    payload.stack_all_multiples = this.stackMultiples;
-    payload.layout = this.currentLayout;
     const loader = document.getElementById('appLoader');
     const statusText = document.getElementById('loadingStatusText');
     loader.classList.add('active');

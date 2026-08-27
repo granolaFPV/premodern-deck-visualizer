@@ -48,32 +48,10 @@ class DeckVisualizer {
     this.jitterPercent = 45;
     this.realismMultiplier = 1.0; // 0.0 (laser straight) to 7.7 (350% haphazard)
     this.isDistressed = false;
-    this.showDice = true;
     this.currentPlaymat = 'heather';
     this.currentSleeve = 'black';
 
     this.selectedSwapCard = null; // For click-to-swap repositioning
-  }
-
-  setShowDice(bool) {
-    this.showDice = Boolean(bool);
-    if (this.playmatEl) {
-      this.playmatEl.classList.toggle('hide-dice', !this.showDice);
-    }
-  }
-
-  getWearClass(instanceId, name) {
-    let hash = 0;
-    const sId = String(instanceId || name || '');
-    for (let i = 0; i < sId.length; i++) {
-      hash = ((hash << 5) - hash) + sId.charCodeAt(i);
-      hash |= 0;
-    }
-    const wearScore = Math.abs(hash) % 100;
-    if (wearScore >= 80) return 'wear-hp';
-    if (wearScore >= 50) return 'wear-top-shuffle';
-    if (wearScore >= 25) return 'wear-corners-sides';
-    return 'wear-nm';
   }
 
   setDeckData(data) {
@@ -111,9 +89,8 @@ class DeckVisualizer {
 
   setPlaymat(style) {
     this.currentPlaymat = style;
-    const layout = this.deckData?.layout || this.deckData?.mainboard?.layout || 'classic';
     if (this.playmatEl) {
-      this.playmatEl.className = `playmat-surface ${style} layout-${layout}${this.isDistressed ? ' is-distressed' : ''}${!this.showDice ? ' hide-dice' : ''}`;
+      this.playmatEl.className = `playmat-surface ${style}${this.isDistressed ? ' is-distressed' : ''}`;
     }
   }
 
@@ -172,14 +149,13 @@ class DeckVisualizer {
     if (mainSectionEl) mainSectionEl.style.display = 'block';
     if (sbSectionEl) sbSectionEl.style.display = 'block';
 
-    const layout = this.deckData.layout || this.deckData.mainboard?.layout || 'classic';
     if (this.playmatEl) {
-      this.playmatEl.className = `playmat-surface ${this.currentPlaymat} layout-${layout}${this.isDistressed ? ' is-distressed' : ''}${!this.showDice ? ' hide-dice' : ''}`;
+      this.playmatEl.className = `playmat-surface ${this.currentPlaymat}${this.isDistressed ? ' is-distressed' : ''}`;
     }
 
-    this.renderMainboard(layout);
-    this.renderSideboard(layout);
-    this.applyJitterStyles(layout);
+    this.renderMainboard();
+    this.renderSideboard();
+    this.applyJitterStyles();
   }
 
   createCardSlot(cardInst, r, c) {
@@ -198,33 +174,15 @@ class DeckVisualizer {
       const imgSrc = cardData.image_url || '';
       const langDisplay = cardData.lang_name || cardData.lang?.toUpperCase() || 'EN';
       const poscaColor = cardData.posca_border || cardInst.posca_border || '';
-      const isStacked = Boolean(cardInst.is_stacked);
-      const stackCount = cardInst.stack_count || 1;
-      const wearClass = this.getWearClass(cardInst.instance_id, cardInst.name);
-
-      if (isStacked) {
-        cardSlot.classList.add('is-stacked-card');
-      }
 
       cardSlot.innerHTML = `
         <div class="card-sleeve">
-          ${isStacked ? `
-            <div class="card-stack-offset card-stack-layer-2"></div>
-            <div class="card-stack-offset card-stack-layer-1"></div>
-          ` : ''}
           <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
           ${poscaColor ? `<div class="posca-border-overlay" style="border-color: ${poscaColor};"></div>` : ''}
-          <div class="card-distress-overlay ${wearClass}"></div>
-          ${isStacked ? `
-            <div class="card-die-container" title="${stackCount}x ${cardInst.name} stacked">
-              <div class="card-die">
-                <span class="die-number">${stackCount}</span>
-              </div>
-            </div>
-          ` : ''}
+          <div class="card-distress-overlay"></div>
         </div>
         <div class="card-tooltip">
-          <div class="tooltip-title">${cardData.printed_name || cardInst.name}${isStacked ? ` (${stackCount} Copies Stacked)` : ''}</div>
+          <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>
           <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}${poscaColor ? ' • 🖌️ Posca Alter' : ''}</div>
           <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art / border / version</div>
         </div>
@@ -243,66 +201,25 @@ class DeckVisualizer {
     return cardSlot;
   }
 
-  renderMainboard(layout = 'classic') {
+  renderMainboard() {
     this.mainboardGridEl.innerHTML = '';
     const mb = this.deckData.mainboard;
     if (!mb || !mb.grid) return;
 
     const rows = mb.rows || 6;
     const cols = mb.cols || 10;
-
-    if (layout === 'type_columns') {
+    this.mainboardGridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    this.mainboardGridEl.style.gridTemplateRows = `repeat(${rows}, auto)`;
+    for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const colEl = document.createElement('div');
-        colEl.className = 'column-group';
-        colEl.dataset.col = c;
-        let cardIdx = 0;
-        for (let r = 0; r < rows; r++) {
-          const cardInst = mb.grid[r][c];
-          if (cardInst) {
-            const slot = this.createCardSlot(cardInst, r, c);
-            slot.style.zIndex = cardIdx + 1;
-            colEl.appendChild(slot);
-            cardIdx++;
-          }
-        }
-        if (cardIdx > 0) {
-          this.mainboardGridEl.appendChild(colEl);
-        }
-      }
-    } else if (layout === 'horizontal_cascade') {
-      for (let r = 0; r < rows; r++) {
-        const tierEl = document.createElement('div');
-        tierEl.className = 'horizontal-tier';
-        tierEl.dataset.row = r;
-        let cardIdx = 0;
-        for (let c = 0; c < cols; c++) {
-          const cardInst = mb.grid[r][c];
-          if (cardInst) {
-            const slot = this.createCardSlot(cardInst, r, c);
-            slot.style.zIndex = cardIdx + 1;
-            tierEl.appendChild(slot);
-            cardIdx++;
-          }
-        }
-        if (cardIdx > 0) {
-          this.mainboardGridEl.appendChild(tierEl);
-        }
-      }
-    } else {
-      this.mainboardGridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-      this.mainboardGridEl.style.gridTemplateRows = `repeat(${rows}, auto)`;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const cardInst = mb.grid[r][c];
-          const slot = this.createCardSlot(cardInst, r, c);
-          this.mainboardGridEl.appendChild(slot);
-        }
+        const cardInst = mb.grid[r][c];
+        const slot = this.createCardSlot(cardInst, r, c);
+        this.mainboardGridEl.appendChild(slot);
       }
     }
   }
 
-  renderSideboard(layout = 'classic') {
+  renderSideboard() {
     this.sideboardFanEl.innerHTML = '';
     const sb = this.deckData.sideboard;
     if (!sb || !sb.cards || sb.cards.length === 0) return;
@@ -310,124 +227,78 @@ class DeckVisualizer {
     const zipperContainer = document.createElement('div');
     zipperContainer.className = 'sb-zipper-container';
 
-    const isFlat = layout === 'type_columns' || layout === 'sideboard_right' || (sb.cards[0]?.angle === 0.0);
+    const cardW = 104;
+    const cardH = 145;
+    const theta = 38 * (Math.PI / 180);
+    const halfProjW = (cardW * Math.cos(theta) + cardH * Math.sin(theta)) / 2;
+    const mainboardW = 10 * cardW + 9 * 2;
 
-    if (isFlat) {
-      sb.cards.forEach((cardInst, idx) => {
-        const cardSlot = document.createElement('div');
-        cardSlot.className = 'sb-card-item';
-        cardSlot.dataset.instanceId = cardInst.instance_id;
-        cardSlot.dataset.sbRow = cardInst.sb_row || 0;
-        cardSlot.dataset.sbCol = cardInst.sb_col || 0;
-        cardSlot.style.zIndex = idx + 1;
+    const minCx = halfProjW;
+    const maxCx = mainboardW - halfProjW;
+    const stepX = (maxCx - minCx) / 7;
+    const deltaY = 96;
 
-        if (cardInst.card_data?.is_foil) {
-          cardSlot.classList.add('is-foil');
+    const row0Y = 90;
+    const row1Y = row0Y + deltaY;
+
+    sb.cards.forEach((cardInst) => {
+      const r = cardInst.sb_row || 0;
+      const col = cardInst.sb_col || 0;
+
+      let cx, cy, zIdx;
+      if (r === 0) {
+        cx = minCx + col * stepX;
+        cy = row0Y;
+        zIdx = 10 + col;
+      } else {
+        cx = minCx + (col + 0.5) * stepX;
+        cy = row1Y;
+        zIdx = 20 + col;
+      }
+
+      const left = Math.round(cx - cardW / 2);
+      const top = Math.round(cy - cardH / 2);
+
+      const cardSlot = document.createElement('div');
+      cardSlot.className = 'sb-card-item';
+      cardSlot.dataset.instanceId = cardInst.instance_id;
+      cardSlot.dataset.sbRow = r;
+      cardSlot.dataset.sbCol = col;
+      cardSlot.style.left = `${left}px`;
+      cardSlot.style.top = `${top}px`;
+      cardSlot.style.zIndex = zIdx;
+
+      if (cardInst.card_data?.is_foil) {
+        cardSlot.classList.add('is-foil');
+      }
+
+      const cardData = cardInst.card_data || {};
+      const imgSrc = cardData.image_url || '';
+      const langDisplay = cardData.lang_name || cardData.lang?.toUpperCase() || 'EN';
+      const poscaColor = cardData.posca_border || cardInst.posca_border || '';
+
+      cardSlot.innerHTML = `
+        <div class="card-sleeve">
+          <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
+          ${poscaColor ? `<div class="posca-border-overlay" style="border-color: ${poscaColor};"></div>` : ''}
+          <div class="card-distress-overlay"></div>
+        </div>
+        <div class="card-tooltip">
+          <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>
+          <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}${poscaColor ? ' • 🖌️ Posca Alter' : ''}</div>
+          <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art / border / version</div>
+        </div>
+      `;
+
+      cardSlot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.onCardClick) {
+          this.onCardClick(cardInst);
         }
-
-        const cardData = cardInst.card_data || {};
-        const imgSrc = cardData.image_url || '';
-        const langDisplay = cardData.lang_name || cardData.lang?.toUpperCase() || 'EN';
-        const poscaColor = cardData.posca_border || cardInst.posca_border || '';
-        const wearClass = this.getWearClass(cardInst.instance_id, cardInst.name);
-
-        cardSlot.innerHTML = `
-          <div class="card-sleeve">
-            <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
-            ${poscaColor ? `<div class="posca-border-overlay" style="border-color: ${poscaColor};"></div>` : ''}
-            <div class="card-distress-overlay ${wearClass}"></div>
-          </div>
-          <div class="card-tooltip">
-            <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>
-            <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}${poscaColor ? ' • 🖌️ Posca Alter' : ''}</div>
-            <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art / border / version</div>
-          </div>
-        `;
-
-        cardSlot.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (this.onCardClick) {
-            this.onCardClick(cardInst);
-          }
-        });
-
-        zipperContainer.appendChild(cardSlot);
       });
-    } else {
-      const cardW = 104;
-      const cardH = 145;
-      const theta = 38 * (Math.PI / 180);
-      const halfProjW = (cardW * Math.cos(theta) + cardH * Math.sin(theta)) / 2;
-      const mainboardW = 10 * cardW + 9 * 2;
 
-      const minCx = halfProjW;
-      const maxCx = mainboardW - halfProjW;
-      const stepX = (maxCx - minCx) / 7;
-      const deltaY = 96;
-
-      const row0Y = 90;
-      const row1Y = row0Y + deltaY;
-
-      sb.cards.forEach((cardInst) => {
-        const r = cardInst.sb_row || 0;
-        const col = cardInst.sb_col || 0;
-
-        let cx, cy, zIdx;
-        if (r === 0) {
-          cx = minCx + col * stepX;
-          cy = row0Y;
-          zIdx = 10 + col;
-        } else {
-          cx = minCx + (col + 0.5) * stepX;
-          cy = row1Y;
-          zIdx = 20 + col;
-        }
-
-        const left = Math.round(cx - cardW / 2);
-        const top = Math.round(cy - cardH / 2);
-
-        const cardSlot = document.createElement('div');
-        cardSlot.className = 'sb-card-item';
-        cardSlot.dataset.instanceId = cardInst.instance_id;
-        cardSlot.dataset.sbRow = r;
-        cardSlot.dataset.sbCol = col;
-        cardSlot.style.left = `${left}px`;
-        cardSlot.style.top = `${top}px`;
-        cardSlot.style.zIndex = zIdx;
-
-        if (cardInst.card_data?.is_foil) {
-          cardSlot.classList.add('is-foil');
-        }
-
-        const cardData = cardInst.card_data || {};
-        const imgSrc = cardData.image_url || '';
-        const langDisplay = cardData.lang_name || cardData.lang?.toUpperCase() || 'EN';
-        const poscaColor = cardData.posca_border || cardInst.posca_border || '';
-        const wearClass = this.getWearClass(cardInst.instance_id, cardInst.name);
-
-        cardSlot.innerHTML = `
-          <div class="card-sleeve">
-            <img class="card-img" src="${imgSrc}" alt="${cardData.printed_name || cardInst.name}" loading="lazy" onerror="window.handleCardImgError(this)">
-            ${poscaColor ? `<div class="posca-border-overlay" style="border-color: ${poscaColor};"></div>` : ''}
-            <div class="card-distress-overlay ${wearClass}"></div>
-          </div>
-          <div class="card-tooltip">
-            <div class="tooltip-title">${cardData.printed_name || cardInst.name}</div>
-            <div class="tooltip-sub">${(cardData.set || '???').toUpperCase()} #${cardData.collector_number || ''} • ${langDisplay}${poscaColor ? ' • 🖌️ Posca Alter' : ''}</div>
-            <div style="color: #ffd700; font-size: 9px; margin-top: 2px;">Click to change art / border / version</div>
-          </div>
-        `;
-
-        cardSlot.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (this.onCardClick) {
-            this.onCardClick(cardInst);
-          }
-        });
-
-        zipperContainer.appendChild(cardSlot);
-      });
-    }
+      zipperContainer.appendChild(cardSlot);
+    });
 
     this.sideboardFanEl.appendChild(zipperContainer);
   }
