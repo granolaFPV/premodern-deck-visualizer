@@ -325,21 +325,53 @@ class DeckVisualizerHandler(BaseHTTPRequestHandler):
                 })
 
             # Pack boards
-            packed_mb = grid_packer.pack_mainboard(main_groups, target_rows=6, target_cols=10)
-            packed_sb = grid_packer.pack_sideboard(sb_groups, max_per_row=8, base_angle=-38.0)
+            layout = req_data.get('layout', 'classic')
+            stack_basics = bool(req_data.get('stack_basics', False))
+            stack_all_multiples = bool(req_data.get('stack_all_multiples', False))
+            packed_mb, packed_sb = grid_packer.pack_deck(
+                main_groups, sb_groups,
+                layout=layout,
+                stack_basics=stack_basics,
+                stack_all_multiples=stack_all_multiples
+            )
 
             response = {
                 'name': deck_name,
                 'format': deck_format,
+                'layout': layout,
                 'mainboard': packed_mb,
                 'sideboard': packed_sb,
-                'total_main': packed_mb['total_cards'],
-                'total_sb': packed_sb['total_cards']
+                'main_groups': main_groups,
+                'sb_groups': sb_groups,
+                'total_main': sum(g['quantity'] for g in main_groups),
+                'total_sb': sum(g['quantity'] for g in sb_groups)
             }
             self.send_json(response)
             return
 
-        # 3. API: Client Error Logging
+        # 3. API: Repack Grid (Instant toggle without calling Scryfall)
+        if path == '/api/repack-grid':
+            main_groups = req_data.get('main_groups', [])
+            sb_groups = req_data.get('sb_groups', [])
+            layout = req_data.get('layout', 'classic')
+            stack_basics = bool(req_data.get('stack_basics', False))
+            stack_all_multiples = bool(req_data.get('stack_all_multiples', False))
+            packed_mb, packed_sb = grid_packer.pack_deck(
+                main_groups, sb_groups,
+                layout=layout,
+                stack_basics=stack_basics,
+                stack_all_multiples=stack_all_multiples
+            )
+            self.send_json({
+                'layout': layout,
+                'mainboard': packed_mb,
+                'sideboard': packed_sb,
+                'total_main': sum(g['quantity'] for g in main_groups),
+                'total_sb': sum(g['quantity'] for g in sb_groups)
+            })
+            return
+
+        # 4. API: Client Error Logging
         if path == '/api/client-error':
             msg = req_data.get('msg', 'unknown')
             url = req_data.get('url', '')

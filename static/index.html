@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>MTG Premodern Deck Visualizer '98</title>
   <meta name="description" content="Generate realistic overhead tabletop photo visualizations of your Magic: The Gathering Premodern decks with authentic retro frames, Japanese scans, and zippered sideboard layouts.">
   
@@ -17,7 +17,7 @@
   <meta name="twitter:description" content="Simulate an authentic overhead table photograph of your MTG Premodern deck.">
   <meta name="twitter:image" content="https://deck-visualizer-4mon.onrender.com/static/scans/diabolic_edict_tmp_ja.jpg">
 
-  <link rel="stylesheet" href="/static/css/style.css?v=20260826_08">
+  <link rel="stylesheet" href="/static/css/style.css?v=20260827_02">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,10 +85,17 @@
       </div>
       <div class="menu-item" id="menuMat">Playmat
         <div class="dropdown-menu">
-          <button class="mat-opt-btn active" data-mat="heather">🩶 Heathered Grey Cloth (Photo Match)</button>
+          <button class="mat-opt-btn active" data-mat="heather">🩶 Heather Grey Cloth (Tournament Match)</button>
+          <button class="mat-opt-btn" data-mat="spellground">📜 Spellground '94 Sand (Vintage Tan)</button>
           <button class="mat-opt-btn" data-mat="charcoal">🖤 Charcoal Heather Fabric</button>
           <button class="mat-opt-btn" data-mat="greenfelt">🟢 Classic Green Felt Table</button>
           <button class="mat-opt-btn" data-mat="wood">🪵 Rich Walnut Table</button>
+          <hr>
+          <button class="mat-opt-btn" data-mat="cosmic">🌌 Cosmic Void (Stoner Doom)</button>
+          <button class="mat-opt-btn" data-mat="toxic">🧪 Acid Sludge (Toxic Peat)</button>
+          <button class="mat-opt-btn" data-mat="bloodrust">🩸 Blood & Rust (Industrial Metal)</button>
+          <button class="mat-opt-btn" data-mat="occult">🔮 Occult Velvet (Dark Ritual)</button>
+          <button class="mat-opt-btn" data-mat="grunge">🎸 90s Grunge (Acid Wash)</button>
         </div>
       </div>
       <div class="menu-item" id="menuSleeves">Sleeves
@@ -126,6 +133,21 @@
       <div class="tool-divider"></div>
 
       <div class="tool-group">
+        <div class="tool-select-box">
+          <span class="tool-label">Layout:</span>
+          <select id="layoutSelect" class="retro-select" title="Choose overhead tabletop card layout">
+            <option value="classic">📐 Classic Grid (6x10 Table)</option>
+            <option value="type_columns">📊 Type & Mana Columns (Reddit)</option>
+            <option value="sideboard_right">➡️ Sideboard Right (Reddit)</option>
+            <option value="horizontal_cascade">🃏 Horizontal Tiers (Reddit)</option>
+            <option value="chaos_table">🌪️ Wild 'n Crazy Kitchen Table</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group">
         <button class="tool-btn" id="btnReJitter" title="Randomize card misalignment">
           <span class="tool-icon">🎲</span>
           <span class="tool-label">Jitter</span>
@@ -138,6 +160,18 @@
         <button class="tool-btn" id="btnDistressify" title="Toggle Distressify: Simulates vintage Heavily Played and Damaged cards with edge wear, scuffs, and aging">
           <span class="tool-icon">📜</span>
           <span class="tool-label">Distressify</span>
+        </button>
+        <button class="tool-btn" id="btnStackBasics" title="Stack Basic Lands: Splay multiple copies of basic lands into single piles with a die on top for quantity">
+          <span class="tool-icon">🎲</span>
+          <span class="tool-label">Stack Basics</span>
+        </button>
+        <button class="tool-btn" id="btnStackMultiples" title="Stack All Multiples: Splay all 4-ofs and multiples into single piles with a die on top">
+          <span class="tool-icon">📦</span>
+          <span class="tool-label">Stack All</span>
+        </button>
+        <button class="tool-btn active" id="btnToggleDice" title="Toggle Quantity Dice: Show or hide the 3D die on stacked cards">
+          <span class="tool-icon">🎯</span>
+          <span class="tool-label">Show Dice</span>
         </button>
       </div>
 
@@ -526,9 +560,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/static/js/modal.js?v=20260826_08"></script>
-  <script src="/static/js/visualizer.js?v=20260826_08"></script>
-  <script src="/static/js/exporter.js?v=20260826_08"></script>
-  <script src="/static/js/app.js?v=20260826_08"></script>
+  <script src="/static/js/modal.js?v=20260827_02"></script>
+  <script src="/static/js/visualizer.js?v=20260827_02"></script>
+  <script src="/static/js/exporter.js?v=20260827_02"></script>
+  <script src="/static/js/app.js?v=20260827_02"></script>
 </body>
 </html>
