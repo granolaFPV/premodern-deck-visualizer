@@ -62,7 +62,52 @@ SIDEBOARD:
 1 Hydroblast (ICE) 72
 3 Annul (USG) 59`;
 
-const EXAMPLE_MOXFIELD_URL = EXAMPLE_2_MOXFIELD_URL;
+const EXAMPLE_3_TEXT = `4 Birds of Paradise (4ED) 192
+4 Llanowar Elves (4ED) 205
+4 Yavimaya Elder (UDS) 124
+3 Deranged Hermit (ULG) 101
+3 Spiritmonger (APC) 121
+2 Ravenous Baloth (ONS) 277
+4 Cabal Therapy (JUD) 62
+4 Duress (USG) 132
+3 Pernicious Deed (APC) 114
+3 Smother (ONS) 170
+2 Recurring Nightmare (EXO) 72
+1 Haunting Echoes (ODY) 139
+4 Treetop Village (ULG) 143
+4 Llanowar Wastes (APC) 141
+4 Wasteland (TMP) 340
+6 Forest (ONS) 347
+5 Swamp (ONS) 341
+
+SIDEBOARD:
+3 Engineered Plague (ULG) 51
+3 Coffin Purge (ODY) 124
+3 Compost (UDS) 102
+2 Naturalize (ONS) 262
+2 Tormod's Crypt (DRK) 112
+2 Haunting Echoes (ODY) 139`;
+
+const EXAMPLE_4_TEXT = `4 Goblin Lackey (USG) 190
+4 Goblin Piledriver (ONS) 205
+4 Siege-Gang Commander (SCG) 103
+4 Goblin Warchief (SCG) 97
+4 Goblin Ringleader (APC) 112
+4 Goblin Matron (USG) 191
+4 Mogg Fanatic (TMP) 180
+4 Gempalm Incinerator (LGN) 94
+4 Lightning Bolt (4ED) 208
+4 Fireblast (VIS) 84
+4 Wasteland (TMP) 340
+4 Rishadan Port (MMQ) 324
+12 Mountain (ONS) 343
+
+SIDEBOARD:
+4 Pyroblast (ICE) 213
+3 Sulfuric Vortex (SCG) 106
+3 Tormod's Crypt (DRK) 112
+3 Price of Progress (EXO) 95
+2 Red Elemental Blast (4ED) 218`;
 
 class App {
   constructor() {
@@ -125,7 +170,8 @@ class App {
 
     const presetEx1 = document.getElementById('presetEx1');
     const presetEx2 = document.getElementById('presetEx2');
-    const presetTopDeck = document.getElementById('presetTopDeck');
+    const presetEx3 = document.getElementById('presetEx3');
+    const presetEx4 = document.getElementById('presetEx4');
 
     // Menu Bar items (Click and mobile touch support)
     const menuItems = document.querySelectorAll('.retro-menubar .menu-item');
@@ -162,7 +208,13 @@ class App {
       this.loadDeck({ text: EXAMPLE_1_TEXT, name: 'Moneyball Black' });
     });
     document.getElementById('menuItemEx2')?.addEventListener('click', () => {
-      this.loadDeck({ moxfield_url: EXAMPLE_2_MOXFIELD_URL, name: 'UR Counterburn' });
+      this.loadDeck({ text: EXAMPLE_2_TEXT, name: 'UR Counterburn' });
+    });
+    document.getElementById('menuItemEx3')?.addEventListener('click', () => {
+      this.loadDeck({ text: EXAMPLE_3_TEXT, name: 'The Rock' });
+    });
+    document.getElementById('menuItemEx4')?.addEventListener('click', () => {
+      this.loadDeck({ text: EXAMPLE_4_TEXT, name: 'Goblins Sligh' });
     });
 
     const openImport = (isUrl = false) => {
@@ -204,13 +256,18 @@ class App {
     });
 
     presetEx2?.addEventListener('click', () => {
-      tabUrl.click();
-      moxfieldUrlInput.value = EXAMPLE_2_MOXFIELD_URL;
+      tabText.click();
+      deckTextInput.value = EXAMPLE_2_TEXT;
     });
 
-    presetTopDeck?.addEventListener('click', () => {
-      tabUrl.click();
-      moxfieldUrlInput.value = 'https://topdeck.gg/deck/TopDeckInvi24/@zrob';
+    presetEx3?.addEventListener('click', () => {
+      tabText.click();
+      deckTextInput.value = EXAMPLE_3_TEXT;
+    });
+
+    presetEx4?.addEventListener('click', () => {
+      tabText.click();
+      deckTextInput.value = EXAMPLE_4_TEXT;
     });
 
     // Submit Import

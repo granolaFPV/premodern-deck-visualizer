@@ -70,8 +70,10 @@
           <button id="menuItemNew">📥 Import New Deck...</button>
           <button id="menuItemMoxfield">🔗 Load Deck URL (TopDeck, Moxfield, Archidekt...)...</button>
           <hr>
-          <button id="menuItemEx1">📋 Load Example 1: Moneyball Black</button>
-          <button id="menuItemEx2">📋 Load Example 2: UR Counterburn</button>
+          <button id="menuItemEx1">📋 Example 1: Moneyball Black</button>
+          <button id="menuItemEx2">⚡️ Example 2: UR Counterburn</button>
+          <button id="menuItemEx3">🪨 Example 3: The Rock (BG Midrange)</button>
+          <button id="menuItemEx4">🔥 Example 4: Goblins / Sligh</button>
           <hr>
           <a href="https://github.com/granolaFPV/premodern-deck-visualizer" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:block; color:inherit;"><button style="width:100%; text-align:left; cursor:pointer;">⭐️ View on GitHub</button></a>
         </div>
@@ -275,14 +277,17 @@
       <div class="modal-body">
         <div class="preset-bar">
           <span class="preset-label">Quick Presets:</span>
-          <button class="retro-btn preset-btn" id="presetEx1" title="Example 1: Moneyball Black">
+          <button class="retro-btn preset-btn" id="presetEx1" title="Example 1: Moneyball Black (Mono Black)">
             📋 Moneyball Black
           </button>
-          <button class="retro-btn preset-btn" id="presetEx2" title="Example 2: UR Counterburn (Moxfield)">
-            🔗 UR Counterburn (Moxfield)
+          <button class="retro-btn preset-btn" id="presetEx2" title="Example 2: UR Counterburn (Control)">
+            ⚡️ UR Counterburn
           </button>
-          <button class="retro-btn preset-btn" id="presetTopDeck" title="Sample TopDeck.gg Tournament Deck">
-            🔥 TopDeck.gg Sample
+          <button class="retro-btn preset-btn" id="presetEx3" title="Example 3: The Rock (BG Midrange)">
+            🪨 The Rock
+          </button>
+          <button class="retro-btn preset-btn" id="presetEx4" title="Example 4: Goblins / Sligh (Red Aggro)">
+            🔥 Goblins / Sligh
           </button>
         </div>
 
@@ -344,10 +349,16 @@
         <button class="modal-close-btn" id="btnCloseVersion">✕</button>
       </div>
 
+      <!-- Mobile Sub-Navigation Tabs (Visible on mobile <= 768px) -->
+      <div class="version-mobile-tabs" id="versionMobileTabs">
+        <button type="button" class="version-tab-btn active" id="tabMobilePrintings">🎴 Card Printings & Art</button>
+        <button type="button" class="version-tab-btn" id="tabMobileAlter">🎨 Border Alter & Scans</button>
+      </div>
+
       <div class="modal-body version-picker-body">
         
         <!-- Left: Selected Card Preview -->
-        <div class="version-left-col">
+        <div class="version-left-col" id="versionLeftCol">
           <div class="card-preview-container">
             <img id="cardModalPreviewImg" src="" alt="Card Art Preview" class="card-large-preview">
             <div id="cardModalPoscaOverlay" class="posca-preview-overlay hidden"></div>
@@ -364,35 +375,37 @@
             <p id="cardModalType" class="meta-type">Instant</p>
           </div>
 
-          <!-- Posca Marker Border Alter -->
-          <div class="posca-marker-section">
-            <div class="posca-header">
-              <span class="posca-title">🖌️ Posca Marker Border:</span>
-              <button type="button" class="posca-reset-btn" id="btnResetPosca" title="Reset to natural card border">Reset</button>
+          <!-- Posca Marker Border Alter & Custom Scans -->
+          <div class="version-alter-container" id="versionAlterContainer">
+            <div class="posca-marker-section">
+              <div class="posca-header">
+                <span class="posca-title">🖌️ Posca Marker Border:</span>
+                <button type="button" class="posca-reset-btn" id="btnResetPosca" title="Reset to natural card border">Reset</button>
+              </div>
+              <div class="posca-swatches" id="poscaSwatches">
+                <button type="button" class="posca-swatch active" data-color="" title="None (Original Border)" style="background: transparent; border: 2px dashed #666;"></button>
+                <button type="button" class="posca-swatch" data-color="#111111" title="Posca Black (Black-Border Alter)" style="background: #111111;"></button>
+                <button type="button" class="posca-swatch" data-color="#f5f5f0" title="Posca White (White-Border Alter)" style="background: #f5f5f0;"></button>
+                <button type="button" class="posca-swatch" data-color="#d4af37" title="Posca Metallic Gold" style="background: #d4af37;"></button>
+                <button type="button" class="posca-swatch" data-color="#c0c0c0" title="Posca Metallic Silver" style="background: #c0c0c0;"></button>
+                <button type="button" class="posca-swatch" data-color="#c41e3a" title="Posca Crimson Red" style="background: #c41e3a;"></button>
+                <button type="button" class="posca-swatch" data-color="#1e90ff" title="Posca Royal Blue" style="background: #1e90ff;"></button>
+                <button type="button" class="posca-swatch" data-color="#2e8b57" title="Posca Forest Green" style="background: #2e8b57;"></button>
+                <button type="button" class="posca-swatch" data-color="#8a2be2" title="Posca Violet Purple" style="background: #8a2be2;"></button>
+                <button type="button" class="posca-swatch" data-color="#ff1493" title="Posca Hot Pink" style="background: #ff1493;"></button>
+                <label class="posca-custom-label" title="Pick any custom Posca color">
+                  <input type="color" id="poscaCustomColor" value="#d4af37" class="posca-color-input">
+                  <span class="posca-custom-btn">🎨</span>
+                </label>
+              </div>
+              <div class="posca-hint">Click a color to paint the border. Applies to single card or all copies!</div>
             </div>
-            <div class="posca-swatches" id="poscaSwatches">
-              <button type="button" class="posca-swatch active" data-color="" title="None (Original Border)" style="background: transparent; border: 2px dashed #666;"></button>
-              <button type="button" class="posca-swatch" data-color="#111111" title="Posca Black (Black-Border Alter)" style="background: #111111;"></button>
-              <button type="button" class="posca-swatch" data-color="#f5f5f0" title="Posca White (White-Border Alter)" style="background: #f5f5f0;"></button>
-              <button type="button" class="posca-swatch" data-color="#d4af37" title="Posca Metallic Gold" style="background: #d4af37;"></button>
-              <button type="button" class="posca-swatch" data-color="#c0c0c0" title="Posca Metallic Silver" style="background: #c0c0c0;"></button>
-              <button type="button" class="posca-swatch" data-color="#c41e3a" title="Posca Crimson Red" style="background: #c41e3a;"></button>
-              <button type="button" class="posca-swatch" data-color="#1e90ff" title="Posca Royal Blue" style="background: #1e90ff;"></button>
-              <button type="button" class="posca-swatch" data-color="#2e8b57" title="Posca Forest Green" style="background: #2e8b57;"></button>
-              <button type="button" class="posca-swatch" data-color="#8a2be2" title="Posca Violet Purple" style="background: #8a2be2;"></button>
-              <button type="button" class="posca-swatch" data-color="#ff1493" title="Posca Hot Pink" style="background: #ff1493;"></button>
-              <label class="posca-custom-label" title="Pick any custom Posca color">
-                <input type="color" id="poscaCustomColor" value="#d4af37" class="posca-color-input">
-                <span class="posca-custom-btn">🎨</span>
-              </label>
+            
+            <div class="custom-url-box">
+              <label for="customImgUrlInput" class="custom-url-label">Custom Image URL / Alter:</label>
+              <input type="text" id="customImgUrlInput" class="retro-input" placeholder="https://...jpg">
+              <button class="retro-btn" id="btnApplyCustomUrl">Apply URL</button>
             </div>
-            <div class="posca-hint">Click a color to paint the border. Applies to single card or all copies!</div>
-          </div>
-          
-          <div class="custom-url-box">
-            <label for="customImgUrlInput" class="custom-url-label">Custom Image URL / Alter:</label>
-            <input type="text" id="customImgUrlInput" class="retro-input" placeholder="https://...jpg">
-            <button class="retro-btn" id="btnApplyCustomUrl">Apply URL</button>
           </div>
         </div>
 
@@ -405,16 +418,16 @@
               <span class="filter-heading">Language:</span>
               <div class="lang-pills" id="langPillContainer">
                 <button class="lang-pill active" data-lang="all">All</button>
-                <button class="lang-pill" data-lang="ja">🇯🇵 Japanese (日本語)</button>
-                <button class="lang-pill" data-lang="ko">🇰🇷 Korean (한국어)</button>
-                <button class="lang-pill" data-lang="zhs">🇨🇳 Simp. Chinese (简体)</button>
-                <button class="lang-pill" data-lang="zht">🇹🇼 Trad. Chinese (繁體)</button>
-                <button class="lang-pill" data-lang="en">🇺🇸 English</button>
-                <button class="lang-pill" data-lang="de">🇩🇪 German</button>
-                <button class="lang-pill" data-lang="fr">🇫🇷 French</button>
-                <button class="lang-pill" data-lang="it">🇮🇹 Italian</button>
-                <button class="lang-pill" data-lang="es">🇪🇸 Spanish</button>
-                <button class="lang-pill" data-lang="pt">🇵🇹 Portuguese</button>
+                <button class="lang-pill" data-lang="ja" title="Japanese (日本語)">🇯🇵 JA</button>
+                <button class="lang-pill" data-lang="ko" title="Korean (한국어)">🇰🇷 KO</button>
+                <button class="lang-pill" data-lang="zhs" title="Simp. Chinese (简体)">🇨🇳 ZHS</button>
+                <button class="lang-pill" data-lang="zht" title="Trad. Chinese (繁體)">🇹🇼 ZHT</button>
+                <button class="lang-pill" data-lang="en" title="English">🇺🇸 EN</button>
+                <button class="lang-pill" data-lang="de" title="German (Deutsch)">🇩🇪 DE</button>
+                <button class="lang-pill" data-lang="fr" title="French (Français)">🇫🇷 FR</button>
+                <button class="lang-pill" data-lang="it" title="Italian (Italiano)">🇮🇹 IT</button>
+                <button class="lang-pill" data-lang="es" title="Spanish (Español)">🇪🇸 ES</button>
+                <button class="lang-pill" data-lang="pt" title="Portuguese (Português)">🇵🇹 PT</button>
               </div>
             </div>
 

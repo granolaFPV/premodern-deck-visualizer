@@ -69,11 +69,28 @@ class CardVersionModal {
     this.applySingleBtn = document.getElementById('btnApplySingle');
     this.applyAllBtn = document.getElementById('btnApplyAll');
     this.applyCustomUrlBtn = document.getElementById('btnApplyCustomUrl');
+
+    // Mobile Navigation Tabs
+    this.tabMobilePrintings = document.getElementById('tabMobilePrintings');
+    this.tabMobileAlter = document.getElementById('tabMobileAlter');
   }
 
   bindEvents() {
     this.closeBtn.addEventListener('click', () => this.close());
     this.cancelBtn.addEventListener('click', () => this.close());
+
+    // Mobile tabs
+    this.tabMobilePrintings?.addEventListener('click', () => {
+      this.modalEl.classList.remove('mobile-show-alter');
+      this.tabMobilePrintings.classList.add('active');
+      this.tabMobileAlter?.classList.remove('active');
+    });
+
+    this.tabMobileAlter?.addEventListener('click', () => {
+      this.modalEl.classList.add('mobile-show-alter');
+      this.tabMobileAlter.classList.add('active');
+      this.tabMobilePrintings?.classList.remove('active');
+    });
 
     // Language pills
     this.langContainer.addEventListener('click', (e) => {
@@ -349,6 +366,11 @@ class CardVersionModal {
     this.customUrlInput.value = '';
     this.directImgUrlInput.value = '';
     this.searchInput.value = '';
+
+    // Reset mobile tabs to Printings view
+    this.modalEl.classList.remove('mobile-show-alter');
+    this.tabMobilePrintings?.classList.add('active');
+    this.tabMobileAlter?.classList.remove('active');
 
     // Sync Posca swatches active state
     if (this.poscaSwatchesContainer) {
