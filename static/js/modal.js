@@ -164,8 +164,8 @@ class CardVersionModal {
       }
     };
 
-    this.applyCustomUrlBtn.addEventListener('click', () => {
-      handleCustomUrl(this.customUrlInput.value);
+    this.applyCustomUrlBtn?.addEventListener('click', () => {
+      if (this.customUrlInput) handleCustomUrl(this.customUrlInput.value);
     });
 
     this.btnApplyDirectUrl.addEventListener('click', () => {
@@ -363,7 +363,7 @@ class CardVersionModal {
     this.selectedPrinting.posca_border = this.selectedPoscaColor;
     this.titleEl.textContent = `Customize Version & Art — ${cardInstance.name}`;
     this.foilCheck.checked = Boolean(this.selectedPrinting.is_foil);
-    this.customUrlInput.value = '';
+    if (this.customUrlInput) this.customUrlInput.value = '';
     this.directImgUrlInput.value = '';
     this.searchInput.value = '';
 
